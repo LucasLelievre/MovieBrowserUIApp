@@ -1,4 +1,4 @@
-#include "MyApp.h"
+#include "MovieBrowser.h"
 
 int main() {
   MyApp app;

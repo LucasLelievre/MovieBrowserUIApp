@@ -103,6 +103,7 @@ void MyApp::OnDOMReady(ultralight::View* caller,
   ///
   /// This is the best time to setup any JavaScript bindings.
   ///
+  caller->EvaluateScript("addMovies()");
   caller->EvaluateScript("setEventListeners()");
 }
 

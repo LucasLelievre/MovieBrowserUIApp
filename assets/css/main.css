@@ -18,18 +18,23 @@ a:hover {
     padding: 0.7em;
 }
 h1 {
-    color: white;
     font-family: Ubuntu-Bold-Italic;
     font-size: 3em;
+    color: white;
     float: left;
 }
-#settingsButton{
+h2 {
+    font-family: Ubuntu-Bold-Italic;
+    font-size: 2.5em;
+    margin-bottom: 0.5em;
+}
+#settings{
     color: white;
     float: right;
     font-size: 2em;
     padding: 0.3em;
 }
-.modal {
+.modalDiv {
     display: none;
     position: fixed;
     z-index: 1;
@@ -66,7 +71,7 @@ h1 {
     transition: 0.3s;
 }
 .card:hover{
-    border-color: black;
+    border-color: purple;
     box-shadow: 0 8px 16px 0 rgba(0,0,0,0.5);
 }
 .moviePoster{

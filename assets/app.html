@@ -12,21 +12,28 @@
   <!-- Title bar -->
   <div class="header">
     <h1>Hello there</h1>
-    <a href="#" id="settingsButton">⚙</a>
+    <a href="#" id="settings" class="modalButton">⚙</a>
   </div>
-  <div id="settingsPanel" class="modal">
+  <div id="settings_modal" class="modalDiv">
     <div class="modalContent">
-      <h1>Settings</h1>
-      <input type="file" webkitdirectory directory multiple/>
+      <h2>Settings</h2>
+      <p>
+        TODO - Add a folder path
+        <input type="file" webkitdirectory directory multiple/>
+        <a href="#">add folder path</a>
+      </p>
+      <p>
+        Folder paths :
+        <ul>
+          <li>path 1 <a href="#">edit</a> <a href="#">remove</a></li>
+          <li>path 2 <a href="#">edit</a> <a href="#">remove</a></li>
+          <li>path 3 <a href="#">edit</a> <a href="#">remove</a></li>
+        </ul>
+      </p>
     </div>
   </div>
   <!-- Movies list -->
-  <div class="responsiveGrid">
-    <a href="#" class="card">
-      <img src="img/missing_poster.png" alt="movie picture" class="moviePoster">
-      <div class="movieTitle">movie title</div>
-    </a>
-  </div>
+  <div class="responsiveGrid" id="movieList"></div>
   <!-- Footer -->
   <div class="footer">
     Lucas Lelièvre 2021

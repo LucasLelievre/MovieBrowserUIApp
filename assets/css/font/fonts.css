@@ -6,3 +6,7 @@
     font-family: Ubuntu-Bold;
     src: url(ubuntu-font-family-0.80/Ubuntu-B.ttf);
 }
+@font-face {
+    font-family: Ubuntu-Bold-Italic;
+    src: url(ubuntu-font-family-0.80/Ubuntu-BI.ttf);
+}

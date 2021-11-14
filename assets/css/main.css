@@ -1,21 +1,79 @@
 /* reset default style */
-* {margin: 0;padding: 0;border: 0;outline: 0;font-size: 100%;vertical-align: baseline;background: transparent;}
+* {margin: 0;padding: 0;border: 0;outline: 0;font-size: 100%;vertical-align: baseline;background: transparent;
+    color: black;
+    text-decoration: none;
+}
 
 body {
     font-family: Ubuntu-Regular, sans-serif;
     margin-bottom: 2.5em;
 }
-a {
-    color: black;
-    text-decoration: none;
+a:hover {
+    color: purple;
 }
 .header {
+    background-color: #191919;
+    text-align: center;
+    overflow: hidden;
+    padding: 0.7em;
+}
+h1 {
+    color: white;
+    font-family: Ubuntu-Bold-Italic;
+    font-size: 3em;
+    float: left;
+}
+#settingsButton{
+    color: white;
+    float: right;
+    font-size: 2em;
+    padding: 0.3em;
+}
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    padding-top: 6em;
     left: 0;
     top: 0;
     width: 100%;
-    background-color: #191919;
-    color: white;
-    text-align: center;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.5);
+}
+.modalContent {
+    background-color: white;
+    margin: auto;
+    padding: 20px;
+    border: 2px solid black;
+    border-radius: 0.5em;
+    width: 80%;
+}
+.responsiveGrid{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1em;
+    padding: 10px;
+}
+.card{
+    display: block;
+    width: 11em;
+    margin: 0.3em;
+    padding: 0.3em;
+    border: 2px solid lightgrey;
+    border-radius: 0.5em;
+    background-color: white;
+    transition: 0.3s;
+}
+.card:hover{
+    border-color: black;
+    box-shadow: 0 8px 16px 0 rgba(0,0,0,0.5);
+}
+.moviePoster{
+    width: 100%;
+    height: auto;
+    border-radius: 3px;
+    margin-bottom: 0.3em;
 }
 .footer {
     position: fixed;
@@ -31,32 +89,4 @@ a {
 .weblink {
     color: white;
     font-family: Ubuntu-Bold;
-}
-.responsiveGrid{
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 1rem;
-    padding: 10px;
-}
-.card{
-    display: block;
-    width: 180px;
-    margin: 5px;
-    padding: 5px;
-    border: lightgrey;
-    border-style: solid;
-    border-radius: 8px;
-    border-width: 2px;
-    background-color: white;
-    transition: 0.3s;
-}
-.card:hover{
-    border-color: black;
-    box-shadow: 0 8px 16px 0 rgba(0,0,0,0.5);
-}
-.moviePoster{
-    width: 100%;
-    height: auto;
-    border-radius: 3px;
-    margin-bottom: 5px;
 }

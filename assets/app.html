@@ -2,6 +2,7 @@
 
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="css/font/fonts.css">
   <link rel="stylesheet" href="css/main.css">
   <title>Movie Browser</title>
@@ -11,7 +12,13 @@
   <!-- Title bar -->
   <div class="header">
     <h1>Hello there</h1>
-    <a href="#" class="stickRight">settings</a>
+    <a href="#" id="settingsButton">⚙</a>
+  </div>
+  <div id="settingsPanel" class="modal">
+    <div class="modalContent">
+      <h1>Settings</h1>
+      <input type="file" webkitdirectory directory multiple/>
+    </div>
   </div>
   <!-- Movies list -->
   <div class="responsiveGrid">

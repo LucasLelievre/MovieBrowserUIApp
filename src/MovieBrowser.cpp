@@ -113,7 +113,8 @@ void MyApp::OnChangeCursor(ultralight::View* caller,
   ///
   /// We update the main window's cursor here.
   ///
-  window_->SetCursor(cursor);
+  if (cursor == kCursor_Hand) window_->SetCursor(kCursor_Pointer);
+  else window_->SetCursor(cursor);
 }
 
 void MyApp::OnChangeTitle(ultralight::View* caller,

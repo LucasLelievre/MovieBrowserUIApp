@@ -1,26 +1,31 @@
 <html>
-  <head>
-    <meta charset="UTF-8">
-    <link rel="stylesheet" href="css/font/fonts.css">
-    <link rel="stylesheet" href="css/main.css">
-    <title>Movie Browser</title>
-  </head>
-  <header>
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="css/font/fonts.css">
+  <link rel="stylesheet" href="css/main.css">
+  <title>Movie Browser</title>
+</head>
+
+<body>
+  <!-- Title bar -->
+  <div class="header">
     <h1>Hello there</h1>
-    <a href="#">settings</a>
-  </header>
-  <body>
-    <h2>Path no 1</h2>
-    <div class="subFoldersContainer">
-      <a href="#" class="subFolder">subFolder no 1</a>
-    </div>
-    <div class="moviesContainer">
-      <a href="#" class="movie">movie no 1</a>
-    </div>
-  </body>
-  <footer>
+    <a href="#" class="stickRight">settings</a>
+  </div>
+  <!-- Movies list -->
+  <div class="responsiveGrid">
+    <a href="#" class="card">
+      <img src="img/missing_poster.png" alt="movie picture" class="moviePoster">
+      <div class="movieTitle">movie title</div>
+    </a>
+  </div>
+  <!-- Footer -->
+  <div class="footer">
     Lucas Lelièvre 2021
-    <a href="github.com/LucasLelievre/MovieBrowserUIApp.git">github repo</a>
-  </footer>
-  <script src="main.js"></script>
+    <a class="weblink" href="https://www.github.com/LucasLelievre/MovieBrowserUIApp.git">github repo</a>
+  </div>
+</body>
+<script src="main.js"></script>
+
 </html>

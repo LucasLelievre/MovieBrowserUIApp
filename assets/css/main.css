@@ -1,6 +1,62 @@
+/* reset default style */
+* {margin: 0;padding: 0;border: 0;outline: 0;font-size: 100%;vertical-align: baseline;background: transparent;}
+
 body {
     font-family: Ubuntu-Regular, sans-serif;
+    margin-bottom: 2.5em;
 }
-footer{
-    
+a {
+    color: black;
+    text-decoration: none;
+}
+.header {
+    left: 0;
+    top: 0;
+    width: 100%;
+    background-color: #191919;
+    color: white;
+    text-align: center;
+}
+.footer {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    background-color: #191919;
+    color: white;
+    text-align: center;
+    padding: 0.7em;
+    font-size: 0.7em;
+}
+.weblink {
+    color: white;
+    font-family: Ubuntu-Bold;
+}
+.responsiveGrid{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    padding: 10px;
+}
+.card{
+    display: block;
+    width: 180px;
+    margin: 5px;
+    padding: 5px;
+    border: lightgrey;
+    border-style: solid;
+    border-radius: 8px;
+    border-width: 2px;
+    background-color: white;
+    transition: 0.3s;
+}
+.card:hover{
+    border-color: black;
+    box-shadow: 0 8px 16px 0 rgba(0,0,0,0.5);
+}
+.moviePoster{
+    width: 100%;
+    height: auto;
+    border-radius: 3px;
+    margin-bottom: 5px;
 }

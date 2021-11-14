@@ -2,16 +2,23 @@
 #include <AppCore/AppCore.h>
 #include <iostream>
 
+#include <unistd.h>
+#include <stdio.h>
+#include <dirent.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <stdlib.h>
+
 using namespace ultralight;
 
-class MyApp : public AppListener,
+class MovieBrowser : public AppListener,
               public WindowListener,
               public LoadListener,
               public ViewListener {
 public:
-  MyApp();
+  MovieBrowser();
 
-  virtual ~MyApp();
+  virtual ~MovieBrowser();
 
   // Start the run loop.
   virtual void Run();
@@ -43,6 +50,9 @@ public:
 
   virtual void OnChangeTitle(ultralight::View* caller,
     const String& title) override;
+
+  // Scan a directory and populates the array of files
+  virtual ultralight::String scanDirectory(const char* path, int depth);
 
 protected:
   RefPtr<App> app_;

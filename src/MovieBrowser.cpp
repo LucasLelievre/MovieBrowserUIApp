@@ -3,7 +3,7 @@
 #define WINDOW_WIDTH  600
 #define WINDOW_HEIGHT 400
 
-MyApp::MyApp() {
+MovieBrowser::MovieBrowser() {
   ///
   /// Create our main App instance.
   ///
@@ -33,38 +33,38 @@ MyApp::MyApp() {
   overlay_->view()->LoadURL("file:///app.html");
 
   ///
-  /// Register our MyApp instance as an AppListener so we can handle the
+  /// Register our MovieBrowser instance as an AppListener so we can handle the
   /// App's OnUpdate event below.
   ///
   app_->set_listener(this);
 
   ///
-  /// Register our MyApp instance as a WindowListener so we can handle the
+  /// Register our MovieBrowser instance as a WindowListener so we can handle the
   /// Window's OnResize event below.
   ///
   window_->set_listener(this);
 
   ///
-  /// Register our MyApp instance as a LoadListener so we can handle the
+  /// Register our MovieBrowser instance as a LoadListener so we can handle the
   /// View's OnFinishLoading and OnDOMReady events below.
   ///
   overlay_->view()->set_load_listener(this);
 
   ///
-  /// Register our MyApp instance as a ViewListener so we can handle the
+  /// Register our MovieBrowser instance as a ViewListener so we can handle the
   /// View's OnChangeCursor and OnChangeTitle events below.
   ///
   overlay_->view()->set_view_listener(this);
 }
 
-MyApp::~MyApp() {
+MovieBrowser::~MovieBrowser() {
 }
 
-void MyApp::Run() {
+void MovieBrowser::Run() {
   app_->Run();
 }
 
-void MyApp::OnUpdate() {
+void MovieBrowser::OnUpdate() {
   ///
   /// This is called repeatedly from the application's update loop.
   ///
@@ -72,11 +72,11 @@ void MyApp::OnUpdate() {
   ///
 }
 
-void MyApp::OnClose(ultralight::Window* window) {
+void MovieBrowser::OnClose(ultralight::Window* window) {
   app_->Quit();
 }
 
-void MyApp::OnResize(ultralight::Window* window, uint32_t width, uint32_t height) {
+void MovieBrowser::OnResize(ultralight::Window* window, uint32_t width, uint32_t height) {
   ///
   /// This is called whenever the window changes size (values in pixels).
   ///
@@ -85,7 +85,7 @@ void MyApp::OnResize(ultralight::Window* window, uint32_t width, uint32_t height
   overlay_->Resize(width, height);
 }
 
-void MyApp::OnFinishLoading(ultralight::View* caller,
+void MovieBrowser::OnFinishLoading(ultralight::View* caller,
                             uint64_t frame_id,
                             bool is_main_frame,
                             const String& url) {
@@ -94,7 +94,7 @@ void MyApp::OnFinishLoading(ultralight::View* caller,
   ///
 }
 
-void MyApp::OnDOMReady(ultralight::View* caller,
+void MovieBrowser::OnDOMReady(ultralight::View* caller,
                        uint64_t frame_id,
                        bool is_main_frame,
                        const String& url) {
@@ -107,7 +107,7 @@ void MyApp::OnDOMReady(ultralight::View* caller,
   caller->EvaluateScript("setEventListeners()");
 }
 
-void MyApp::OnChangeCursor(ultralight::View* caller,
+void MovieBrowser::OnChangeCursor(ultralight::View* caller,
                            Cursor cursor) {
   ///
   /// This is called whenever the page requests to change the cursor.
@@ -118,7 +118,7 @@ void MyApp::OnChangeCursor(ultralight::View* caller,
   else window_->SetCursor(cursor);
 }
 
-void MyApp::OnChangeTitle(ultralight::View* caller,
+void MovieBrowser::OnChangeTitle(ultralight::View* caller,
                           const String& title) {
   ///
   /// This is called whenever the page requests to change the title.
@@ -126,4 +126,38 @@ void MyApp::OnChangeTitle(ultralight::View* caller,
   /// We update the main window's title here.
   ///
   window_->SetTitle(title.utf8().data());
+}
+
+// Code from https://stackoverflow.com/questions/8149569/scan-a-directory-to-find-files-in-c
+ultralight::String MovieBrowser::scanDirectory(const char* dir, int depth){
+  //std::cout << dir << std::endl;
+  ultralight::String filesJson = "{";
+
+  DIR *dp;
+  struct dirent *entry;
+  struct stat statbuf;
+  if ((dp = opendir(dir)) == NULL) {
+    fprintf(stderr, "cannot open directory: %s\n", dir);
+    return ultralight::String("{}");
+  }
+  chdir(dir);
+  while ((entry = readdir(dp)) != NULL) {
+    lstat(entry->d_name, &statbuf);
+    if (S_ISDIR(statbuf.st_mode)) {
+      // Found a directory
+      if (strcmp(".", entry->d_name) == 0 || strcmp("..", entry->d_name) == 0)
+        continue; // ignoring . and ..
+      printf("%*s%s/\n", depth, "", entry->d_name);
+      /* Recurse at a new indent level */
+      //scanDirectory(entry->d_name, depth + 1);
+      filesJson+="\"directory\":\""+ultralight::String(entry->d_name)+"\",";
+    } else {
+      // Found a file
+      //printf("%*s%s\n", depth, "", entry->d_name);
+      filesJson+="\"movie\":\""+ultralight::String(entry->d_name)+"\",";
+    }
+  }
+  chdir("..");
+  closedir(dp);
+  return ultralight::String(filesJson.utf16().data(), filesJson.utf16().length()-1)+"}";
 }

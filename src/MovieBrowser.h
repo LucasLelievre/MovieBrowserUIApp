@@ -9,8 +9,8 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 
-#include "Directory.h"
-#include "File.h"
+#include <vector>
+#include <regex>
 
 using namespace ultralight;
 
@@ -55,12 +55,12 @@ public:
     const String& title) override;
 
   // Scan a directory and populates the array of files
-  virtual std::string scanDirectory(const char* path, int depth);
+  virtual std::string scanDirectory(std::string path);
 
 protected:
   RefPtr<App> app_;
   RefPtr<Window> window_;
   RefPtr<Overlay> overlay_;
 
-  Directory* mainDir;
+  std::vector<std::string> paths;
 };

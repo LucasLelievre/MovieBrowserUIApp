@@ -56,7 +56,10 @@ MovieBrowser::MovieBrowser() {
   ///
   overlay_->view()->set_view_listener(this);
 
-  mainDir = new Directory("movies");
+  paths.push_back("/media/lucas/BAT-external disk/video/films/");
+  for(std::string path : paths) {
+    std::cout << this->scanDirectory(path) << std::endl;
+  }
 }
 
 MovieBrowser::~MovieBrowser() {
@@ -131,39 +134,39 @@ void MovieBrowser::OnChangeTitle(ultralight::View* caller,
 }
 
 // Code from https://stackoverflow.com/questions/8149569/scan-a-directory-to-find-files-in-c
-std::string MovieBrowser::scanDirectory(const char* dir, int depth){
-  std::string filesJson = "";
-  
+std::string MovieBrowser::scanDirectory(std::string dir){
+  std::string filesJson = "{\"type\":\"directory\",";
+  filesJson.append("\"name\":\"").append(dir).append("\",")
+    .append("\"content\":[");
 
   DIR *dp;
   struct dirent *entry;
   struct stat statbuf;
-  if ((dp = opendir(dir)) == NULL) {
-    fprintf(stderr, "cannot open directory: %s\n", dir);
-    return "{}";
+  if ((dp = opendir(dir.c_str())) == NULL) {
+    fprintf(stderr, "cannot open directory: %s\n", dir.c_str());
+    return "{\"type\":\"error\"}";
   }
-  chdir(dir);
+  chdir(dir.c_str());
   while ((entry = readdir(dp)) != NULL) {
     lstat(entry->d_name, &statbuf);
     if (S_ISDIR(statbuf.st_mode)) {
       // Found a directory
-      if (strcmp(".", entry->d_name) == 0 || strcmp("..", entry->d_name) == 0)
-        continue; // ignoring . and ..
-      //printf("%*s%s/\n", depth, "", entry->d_name);
-      /* Recurse at a new indent level */
-      scanDirectory(entry->d_name, depth + 1);
-      filesJson.append("directory : ").append(entry->d_name).append(",\n");
-      mainDir->addContent(new Directory(entry->d_name));
+      if (strcmp(".", entry->d_name) == 0 || strcmp("..", entry->d_name) == 0) continue; // ignoring . and ..
+      // Recursing inside the directory
+      filesJson.append(scanDirectory(entry->d_name)).append(",");
     } else {
       // Found a file
-      //printf("%*s%s\n", depth, "", entry->d_name);
-      filesJson.append("movie : ").append(entry->d_name).append(",\n");
-      mainDir->addContent(new File(entry->d_name));
+      std::cmatch m;
+      std::regex_search(entry->d_name, m, std::regex("^(.*)(.zip|( \\())"));
+      filesJson.append("{\"type\": \"file\",\"name\": \"");
+      filesJson.append(m[1]).append("\",\"file name\": \"");
+      filesJson.append(entry->d_name).append("\"},");
     }
   }
+  if (filesJson.back() == ',') filesJson.pop_back();
+  filesJson.append("]}");
+
   chdir("..");
   closedir(dp);
-
-  printf("done scanning\n");
-  return mainDir->toJson();
+  return filesJson;
 }

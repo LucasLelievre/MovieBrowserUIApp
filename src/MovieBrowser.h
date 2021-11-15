@@ -9,6 +9,9 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 
+#include "Directory.h"
+#include "File.h"
+
 using namespace ultralight;
 
 class MovieBrowser : public AppListener,
@@ -52,10 +55,12 @@ public:
     const String& title) override;
 
   // Scan a directory and populates the array of files
-  virtual ultralight::String scanDirectory(const char* path, int depth);
+  virtual std::string scanDirectory(const char* path, int depth);
 
 protected:
   RefPtr<App> app_;
   RefPtr<Window> window_;
   RefPtr<Overlay> overlay_;
+
+  Directory* mainDir;
 };

@@ -55,6 +55,8 @@ MovieBrowser::MovieBrowser() {
   /// View's OnChangeCursor and OnChangeTitle events below.
   ///
   overlay_->view()->set_view_listener(this);
+
+  mainDir = new Directory("movies");
 }
 
 MovieBrowser::~MovieBrowser() {
@@ -129,16 +131,16 @@ void MovieBrowser::OnChangeTitle(ultralight::View* caller,
 }
 
 // Code from https://stackoverflow.com/questions/8149569/scan-a-directory-to-find-files-in-c
-ultralight::String MovieBrowser::scanDirectory(const char* dir, int depth){
-  //std::cout << dir << std::endl;
-  ultralight::String filesJson = "{";
+std::string MovieBrowser::scanDirectory(const char* dir, int depth){
+  std::string filesJson = "";
+  
 
   DIR *dp;
   struct dirent *entry;
   struct stat statbuf;
   if ((dp = opendir(dir)) == NULL) {
     fprintf(stderr, "cannot open directory: %s\n", dir);
-    return ultralight::String("{}");
+    return "{}";
   }
   chdir(dir);
   while ((entry = readdir(dp)) != NULL) {
@@ -147,17 +149,21 @@ ultralight::String MovieBrowser::scanDirectory(const char* dir, int depth){
       // Found a directory
       if (strcmp(".", entry->d_name) == 0 || strcmp("..", entry->d_name) == 0)
         continue; // ignoring . and ..
-      printf("%*s%s/\n", depth, "", entry->d_name);
+      //printf("%*s%s/\n", depth, "", entry->d_name);
       /* Recurse at a new indent level */
-      //scanDirectory(entry->d_name, depth + 1);
-      filesJson+="\"directory\":\""+ultralight::String(entry->d_name)+"\",";
+      scanDirectory(entry->d_name, depth + 1);
+      filesJson.append("directory : ").append(entry->d_name).append(",\n");
+      mainDir->addContent(new Directory(entry->d_name));
     } else {
       // Found a file
       //printf("%*s%s\n", depth, "", entry->d_name);
-      filesJson+="\"movie\":\""+ultralight::String(entry->d_name)+"\",";
+      filesJson.append("movie : ").append(entry->d_name).append(",\n");
+      mainDir->addContent(new File(entry->d_name));
     }
   }
   chdir("..");
   closedir(dp);
-  return ultralight::String(filesJson.utf16().data(), filesJson.utf16().length()-1)+"}";
+
+  printf("done scanning\n");
+  return mainDir->toJson();
 }

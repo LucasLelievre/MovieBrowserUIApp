@@ -1,11 +1,13 @@
 function addMovies(moviesJson) {
     movieList = document.getElementById("movieList");
 
+
+    let movieTitle = "";
+    let poster = "img/missing_poster.png";
+    let movieDescription = "Movie Description";
+
     for (let i = 0; i < 10; i++) {
-        let poster = "img/missing_poster.png";
-        let movieTitle = "Movie Title "+i;
-        let movieDescription = "Movie Description";
-        
+        movieTitle = "Movie Title "+i;
         
         movieList.innerHTML +=
         `<a href="#" class="card modalButton" id="card_`+i+`">

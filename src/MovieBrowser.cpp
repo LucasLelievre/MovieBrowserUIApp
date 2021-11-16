@@ -55,8 +55,6 @@ MovieBrowser::MovieBrowser() {
   /// View's OnChangeCursor and OnChangeTitle events below.
   ///
   overlay_->view()->set_view_listener(this);
-
-  paths.push_back("/media/lucas/BAT-external disk/video/films/");
 }
 
 MovieBrowser::~MovieBrowser() {
@@ -105,11 +103,9 @@ void MovieBrowser::OnDOMReady(ultralight::View* caller,
   ///
   /// This is the best time to setup any JavaScript bindings.
   ///
-  std::string jsonData = "{\"data\":[";
-  for(std::string path : paths) {
-    jsonData.append(this->scanDirectory(path));
-  }
-  jsonData.append("]}");
+  
+  this->addPath("/media/lucas/BAT-external disk/video/films/");
+  printf("%s", this->scanPaths().c_str());
   caller->EvaluateScript("addMovies()");
   caller->EvaluateScript("setEventListeners()");
 }
@@ -135,6 +131,19 @@ void MovieBrowser::OnChangeTitle(ultralight::View* caller,
   window_->SetTitle(title.utf8().data());
 }
 
+void MovieBrowser::addPath(std::string newPath) {
+  this->paths.push_back(newPath);
+}
+
+std::string MovieBrowser::scanPaths(){
+  std::string jsonData = "{\"data\":[";
+  for(std::string path : paths) {
+    jsonData.append(this->scanDirectory(path));
+  }
+  jsonData.append("]}");
+  return jsonData;
+}
+
 // Code from https://stackoverflow.com/questions/8149569/scan-a-directory-to-find-files-in-c
 std::string MovieBrowser::scanDirectory(std::string dir){
   std::string jsonData = "";
@@ -144,7 +153,7 @@ std::string MovieBrowser::scanDirectory(std::string dir){
   struct stat statbuf;
   if ((dp = opendir(dir.c_str())) == NULL) {
     fprintf(stderr, "cannot open directory: %s\n", dir.c_str());
-    return "{\"type\":\"error\"}";
+    return "{\"type\":\"errorFile\"}";
   }
   chdir(dir.c_str());
   while ((entry = readdir(dp)) != NULL) {

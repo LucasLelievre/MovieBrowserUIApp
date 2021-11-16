@@ -57,9 +57,6 @@ MovieBrowser::MovieBrowser() {
   overlay_->view()->set_view_listener(this);
 
   paths.push_back("/media/lucas/BAT-external disk/video/films/");
-  for(std::string path : paths) {
-    std::cout << this->scanDirectory(path) << std::endl;
-  }
 }
 
 MovieBrowser::~MovieBrowser() {
@@ -108,6 +105,11 @@ void MovieBrowser::OnDOMReady(ultralight::View* caller,
   ///
   /// This is the best time to setup any JavaScript bindings.
   ///
+  std::string jsonData = "{\"data\":[";
+  for(std::string path : paths) {
+    jsonData.append(this->scanDirectory(path));
+  }
+  jsonData.append("]}");
   caller->EvaluateScript("addMovies()");
   caller->EvaluateScript("setEventListeners()");
 }
@@ -135,9 +137,7 @@ void MovieBrowser::OnChangeTitle(ultralight::View* caller,
 
 // Code from https://stackoverflow.com/questions/8149569/scan-a-directory-to-find-files-in-c
 std::string MovieBrowser::scanDirectory(std::string dir){
-  std::string filesJson = "{\"type\":\"directory\",";
-  filesJson.append("\"name\":\"").append(dir).append("\",")
-    .append("\"content\":[");
+  std::string jsonData = "";
 
   DIR *dp;
   struct dirent *entry;
@@ -153,20 +153,21 @@ std::string MovieBrowser::scanDirectory(std::string dir){
       // Found a directory
       if (strcmp(".", entry->d_name) == 0 || strcmp("..", entry->d_name) == 0) continue; // ignoring . and ..
       // Recursing inside the directory
-      filesJson.append(scanDirectory(entry->d_name)).append(",");
+      jsonData.append("{\"type\":\"directory\",");
+      jsonData.append("\"name\":\"").append(entry->d_name).append("\",");
+      jsonData.append("\"content\":[").append(scanDirectory(entry->d_name)).append("]},");
     } else {
       // Found a file
       std::cmatch m;
       std::regex_search(entry->d_name, m, std::regex("^(.*)(.zip|( \\())"));
-      filesJson.append("{\"type\": \"file\",\"name\": \"");
-      filesJson.append(m[1]).append("\",\"file name\": \"");
-      filesJson.append(entry->d_name).append("\"},");
+      jsonData.append("{\"type\": \"file\",\"name\": \"");
+      jsonData.append(m[1]).append("\",\"file name\": \"");
+      jsonData.append(entry->d_name).append("\"},");
     }
   }
-  if (filesJson.back() == ',') filesJson.pop_back();
-  filesJson.append("]}");
+  if (jsonData.back() == ',') jsonData.pop_back();
 
   chdir("..");
   closedir(dp);
-  return filesJson;
+  return jsonData;
 }

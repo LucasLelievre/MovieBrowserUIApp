@@ -1,4 +1,6 @@
-function addMovies(moviesJson) {
+function addMovies(jsonData) {
+    if (jsonData == undefined) return;
+    
     movieList = document.getElementById("movieList");
 
 

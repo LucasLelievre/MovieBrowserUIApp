@@ -105,7 +105,7 @@ void MovieBrowser::OnDOMReady(ultralight::View* caller,
   ///
   
   this->addPath("/media/lucas/BAT-external disk/video/films/");
-  printf("%s", this->scanPaths().c_str());
+  std::string scanData = this->scanPaths();
   caller->EvaluateScript("addMovies()");
   caller->EvaluateScript("setEventListeners()");
 }

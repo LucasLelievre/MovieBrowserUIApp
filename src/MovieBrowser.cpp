@@ -148,7 +148,7 @@ std::string MovieBrowser::scanPaths(){
 std::string MovieBrowser::scanDirectory(std::string dir){
   std::string jsonData = "";
 
-  DIR *dp;
+  /*DIR *dp;
   struct dirent *entry;
   struct stat statbuf;
   if ((dp = opendir(dir.c_str())) == NULL) {
@@ -177,6 +177,9 @@ std::string MovieBrowser::scanDirectory(std::string dir){
   if (jsonData.back() == ',') jsonData.pop_back();
 
   chdir("..");
-  closedir(dp);
+  closedir(dp);*/
+  std::string path = dir;
+  for (const auto& entry : std::filesystem::recursive_directory_iterator(path))
+    std::cout << entry.path() << "\n";
   return jsonData;
 }

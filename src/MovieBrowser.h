@@ -1,6 +1,5 @@
 #pragma once
 #include <AppCore/AppCore.h>
-#include <iostream>
 
 /*#include <unistd.h>
 #include <stdio.h>
@@ -8,8 +7,8 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <stdlib.h>*/
+#include <iostream>
 #include <filesystem>
-
 #include <vector>
 #include <regex>
 

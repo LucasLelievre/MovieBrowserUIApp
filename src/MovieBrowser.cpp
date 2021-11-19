@@ -104,10 +104,11 @@ void MovieBrowser::OnDOMReady(ultralight::View* caller,
   /// This is the best time to setup any JavaScript bindings.
   ///
   
-  this->addPath("/media/lucas/BAT-external disk/video/films/");
+  //this->addPath("/media/lucas/BAT-external disk/video/films/");
+  this->addPath("D:\\video\\films");
   std::string scanData = this->scanPaths();
-  caller->EvaluateScript("addMovies()");
-  caller->EvaluateScript("setEventListeners()");
+  //caller->EvaluateScript("addMovies()");
+  //caller->EvaluateScript("setEventListeners()");
 }
 
 void MovieBrowser::OnChangeCursor(ultralight::View* caller,
@@ -178,8 +179,28 @@ std::string MovieBrowser::scanDirectory(std::string dir){
 
   chdir("..");
   closedir(dp);*/
-  std::string path = dir;
-  for (const auto& entry : std::filesystem::recursive_directory_iterator(path))
-    std::cout << entry.path() << "\n";
+  try {
+    for (const auto& entry : std::filesystem::recursive_directory_iterator(dir)) {
+      //std::cout << entry.path() << "\n";
+      if (entry.is_directory()) {
+        jsonData.append("{\"type\": \"directory\",\"name\": \"");
+        jsonData.append("\"name\":\"").append(entry.path().filename().string()).append("\",");
+        jsonData.append("\"content\":[").append(" ").append("]},");
+      } else {
+        std::string name = entry.path().filename().string();
+        std::cmatch m;
+        std::regex_search(name.c_str(), m, std::regex("^(.*)(.zip|( \\())"));
+
+        std::cout << m[1].length() << "\t" << entry.path().filename().string() << "\t" << m[1] << "\n";
+
+        jsonData.append("{\"type\": \"file\",\"name\": \"");
+        jsonData.append(m[1]).append("\",\"file name\": \"");
+        jsonData.append(entry.path().filename().string()).append("\"},");
+      }
+    }
+  } catch(const std::exception& e) {
+    std::cerr << e.what() << '\n';
+  }
+  //std::cout << jsonData << std::endl;
   return jsonData;
 }

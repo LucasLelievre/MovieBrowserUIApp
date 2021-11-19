@@ -161,7 +161,7 @@ std::string MovieBrowser::scanDirectory(std::string dir){
   std::string jsonData = "";
   try {
     //for (const auto& entry : std::filesystem::recursive_directory_iterator(dir)) {
-      for (const auto& entry : std::filesystem::directory_iterator(dir)) {
+    for (const auto& entry : std::filesystem::directory_iterator(dir)) {
       if (entry.is_directory()) {
         jsonData.append("{\\\"type\\\": \\\"directory\\\",");
         jsonData.append("\\\"name\\\":\\\"").append(entry.path().filename().string()).append("\\\",");
@@ -177,10 +177,10 @@ std::string MovieBrowser::scanDirectory(std::string dir){
         jsonData.append(entry.path().filename().string()).append("\\\"},");
       }
     }
+    if (jsonData.back() == ',') jsonData.pop_back();
   } catch(const std::exception& e) {
     std::cerr << e.what() << '\n';
   }
-  if (jsonData.back() == ',') jsonData.pop_back();
   return jsonData;
 }
 

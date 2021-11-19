@@ -54,11 +54,20 @@ public:
   virtual void OnChangeTitle(ultralight::View* caller,
     const String& title) override;
 
-
+  // Add a directory path to the list
   virtual void addPath(std::string path);
+  // Scan all the paths
   virtual std::string scanPaths();
   // Scan a directory and populates the array of files
   virtual std::string scanDirectory(std::string path);
+
+  virtual void OnAddConsoleMessage(View* caller,
+                                MessageSource source,
+                                MessageLevel level,
+                                const String& message,
+                                uint32_t line_number,
+                                uint32_t column_number,
+                                const String& source_id) override;
 
 protected:
   RefPtr<App> app_;

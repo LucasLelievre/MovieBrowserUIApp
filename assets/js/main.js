@@ -1,5 +1,5 @@
 // get request on given url
-function requestApi(url) {
+function getDataFromURL(url) {
     return new Promise(function (resolve, reject) {
         var xhr = new XMLHttpRequest();
         xhr.onreadystatechange = function () {
@@ -16,27 +16,25 @@ function requestApi(url) {
     });
 }
 
-function refreshMovieList(jsonData) {
-    //if (jsonData == undefined) return;
-    
+function refreshMovieCards(data) {
     movieList = document.getElementById("movieList");
     movieList.innerHTML = "";
 
-    for (let i = 0; i < 10; i++) {
-        let url = "https://api.themoviedb.org/3/movie/55"+i+"?api_key=39556c17fbe9e58c430f6a811f19fb1c";
-        requestApi(url)
+    JSON.parse(data).data.forEach(element => {
+        console.log(element);
+        //TODO dirrent url based on element's type
+        let url = "https://api.themoviedb.org/3/search/multi?api_key=39556c17fbe9e58c430f6a811f19fb1c&query="+element.name;
+        getDataFromURL(url)
         .then(function (data) {
-            //console.log(data);
-            //movieList.innerHTML += createCard(data.id, data.original_title, "https://image.tmdb.org/t/p/w500" + data.poster_path, data.overview);
-            movieList.appendChild(createCard(data.id, data.original_title, "https://image.tmdb.org/t/p/w500" + data.poster_path, data.overview));
-            movieList.ins
+            let movie = data.results[0];
+            console.log(movie);
+            movieList.appendChild(createCard(movie.id, movie.original_title, "https://image.tmdb.org/t/p/w500" + movie.poster_path, movie.overview));
         }).catch(function (reason) {
             console.log(url);
             console.error(reason);
             movieList.appendChild(createCard(0, "Error API", "img/missing_poster.png", reason, "error api"));
         });
-    }
-    setEventListeners();
+    });
 }
 
 function createCard(id, title, poster, description, type){
@@ -46,14 +44,16 @@ function createCard(id, title, poster, description, type){
     card.setAttribute("id", "card_"+id);
         let cardPoster = document.createElement("img");
         cardPoster.classList.add("cardPoster");
-        cardPoster.setAttribute("alt", "movie poster");
+        cardPoster.setAttribute("alt", "movie cardPoster");
         cardPoster.setAttribute("src", poster);
         console.log(cardPoster);
         let cardTitle = document.createElement("div");
         cardTitle.classList.add("cardTitle");
         cardTitle.innerText = title;
-    //card.appendChild(cardPoster);
+    card.appendChild(cardPoster);
     card.appendChild(cardTitle);
+    // Modal div control
+    card.addEventListener("click", function (event) { document.getElementById(this.attributes["id"].value + "_modal").style.display = "block";});
 
     let modalDiv = document.createElement("div");
     modalDiv.classList.add("modalDiv");
@@ -62,59 +62,34 @@ function createCard(id, title, poster, description, type){
         modalContent.classList.add("modalContent");
             let mil = document.createElement("div");
             mil.classList.add("movieInfo");
-            mil.classList.add("left");
-            mil.appendChild(cardPoster);
+            mil.appendChild(cardPoster.cloneNode(true));
             let mir = document.createElement("div");
             mir.classList.add("movieInfo");
-            mir.classList.add("right");
                 let miTitle = document.createElement("h2");
                 miTitle.innerText = title;
                 let miDescr = document.createElement("p");
+                miDescr.classList.add("description");
                 miDescr.innerText = description;
+                let play = document.createElement("a");
+                play.classList.add("playButton");
+                //TODO play button for movies
+                play.setAttribute("id", "movie_file_name");
+                play.setAttribute("href", "#");
+                play.innerText = "play the movie";
             mir.appendChild(miTitle);
             mir.appendChild(miDescr);
-            let play = document.createElement("a");
-            play.classList.add("playMovie");
-            //TODO play button for movies
-            play.setAttribute("id", "movie_file_name");
-            play.setAttribute("href", "#");
-            play.innerText = "play the movie";
+            mir.appendChild(play);
         modalContent.appendChild(mil);
         modalContent.appendChild(mir);
-        modalContent.appendChild(play);
     modalDiv.appendChild(modalContent);
 
     let output = document.createDocumentFragment();
     output.append(card);
     output.append(modalDiv);
     return output;
-    /*return `<a href="#" class="card modalButton" id="card_`+id+`">
-                <img src="`+poster+`" alt="movie poster" class="moviePoster">
-                <div class="movieTitle">`+title+`</div>
-            </a>
-            <div class="modalDiv" id="card_`+id+`_modal">
-                <div class="modalContent">
-                    <div class="movieInfo left">
-                        <img src="`+poster+`" alt="movie poster" class="">
-                    </div>
-                    <div class="movieInfo right">
-                        <h2>`+title+`</h2>
-                        <p>`+description+`</p>
-                    </div>
-                    <a href="#" class="playMovie" id="movie_file_name">play the movie</a>
-                </div>
-            </div>`;*/
 }
 
 function setEventListeners(){
-
-    //Modal div control
-    var modalButtons = document.getElementsByClassName("modalButton");
-    for (let modalButton of modalButtons) {
-        modalButton.addEventListener("click", function (event) {
-            document.getElementById(modalButton.attributes["id"].value + "_modal").style.display = "block";
-        });
-    }
     window.addEventListener("click", function(event){
         if(event.target.classList.contains("modalDiv")) event.target.style.display = "none";
     });
@@ -133,5 +108,6 @@ function setEventListeners(){
     }
 }
 /*window.onload = function(){
-    refreshMovieList();
+    refreshMovieCards("{\"data\": [{\"type\": \"file\",\"name\": \"Matrix\",\"file name\": \"Matrix (1999).mkv\"}]}");
+    setEventListeners();
 };*/

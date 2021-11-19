@@ -103,12 +103,23 @@ void MovieBrowser::OnDOMReady(ultralight::View* caller,
   ///
   /// This is the best time to setup any JavaScript bindings.
   ///
+
+  caller->EvaluateScript("pouet()");
   
-  //this->addPath("/media/lucas/BAT-external disk/video/films/");
+  this->addPath("/media/lucas/BAT-external disk/video/films/");
   this->addPath("D:\\video\\films");
   std::string scanData = this->scanPaths();
-  //caller->EvaluateScript("addMovies()");
-  //caller->EvaluateScript("setEventListeners()");
+  //std::cout << scanData << std::endl;
+  ultralight::String d = "{\\\"data\\\": [{\\\"type\\\": \\\"file\\\",\\\"name\\\": \\\"Matrix\\\",\\\"file name\\\": \\\"Matrix (1999).mkv\\\"}]}";
+  ultralight::String jsFunc = "refreshMovieCards(\"" + ultralight::String(scanData.c_str()) + "\")";
+  caller->EvaluateScript(jsFunc);
+  
+  /*ultralight::String jsFunc = "refreshMovieList(\"";
+  jsFunc += ultralight::String(scanData.c_str());
+  jsFunc += "\")";
+  std::cout << jsFunc.utf8().data() << std::endl;*/
+  //caller->EvaluateScript(jsFunc);
+  caller->EvaluateScript("setEventListeners()");
 }
 
 void MovieBrowser::OnChangeCursor(ultralight::View* caller,
@@ -137,7 +148,7 @@ void MovieBrowser::addPath(std::string newPath) {
 }
 
 std::string MovieBrowser::scanPaths(){
-  std::string jsonData = "{\"data\":[";
+  std::string jsonData = "{\\\"data\\\":[";
   for(std::string path : paths) {
     jsonData.append(this->scanDirectory(path));
   }
@@ -148,59 +159,87 @@ std::string MovieBrowser::scanPaths(){
 // Code from https://stackoverflow.com/questions/8149569/scan-a-directory-to-find-files-in-c
 std::string MovieBrowser::scanDirectory(std::string dir){
   std::string jsonData = "";
-
-  /*DIR *dp;
-  struct dirent *entry;
-  struct stat statbuf;
-  if ((dp = opendir(dir.c_str())) == NULL) {
-    fprintf(stderr, "cannot open directory: %s\n", dir.c_str());
-    return "{\"type\":\"errorFile\"}";
-  }
-  chdir(dir.c_str());
-  while ((entry = readdir(dp)) != NULL) {
-    lstat(entry->d_name, &statbuf);
-    if (S_ISDIR(statbuf.st_mode)) {
-      // Found a directory
-      if (strcmp(".", entry->d_name) == 0 || strcmp("..", entry->d_name) == 0) continue; // ignoring . and ..
-      // Recursing inside the directory
-      jsonData.append("{\"type\":\"directory\",");
-      jsonData.append("\"name\":\"").append(entry->d_name).append("\",");
-      jsonData.append("\"content\":[").append(scanDirectory(entry->d_name)).append("]},");
-    } else {
-      // Found a file
-      std::cmatch m;
-      std::regex_search(entry->d_name, m, std::regex("^(.*)(.zip|( \\())"));
-      jsonData.append("{\"type\": \"file\",\"name\": \"");
-      jsonData.append(m[1]).append("\",\"file name\": \"");
-      jsonData.append(entry->d_name).append("\"},");
-    }
-  }
-  if (jsonData.back() == ',') jsonData.pop_back();
-
-  chdir("..");
-  closedir(dp);*/
   try {
-    for (const auto& entry : std::filesystem::recursive_directory_iterator(dir)) {
-      //std::cout << entry.path() << "\n";
+    //for (const auto& entry : std::filesystem::recursive_directory_iterator(dir)) {
+      for (const auto& entry : std::filesystem::directory_iterator(dir)) {
       if (entry.is_directory()) {
-        jsonData.append("{\"type\": \"directory\",\"name\": \"");
-        jsonData.append("\"name\":\"").append(entry.path().filename().string()).append("\",");
-        jsonData.append("\"content\":[").append(" ").append("]},");
+        jsonData.append("{\\\"type\\\": \\\"directory\\\",");
+        jsonData.append("\\\"name\\\":\\\"").append(entry.path().filename().string()).append("\\\",");
+        jsonData.append("\\\"content\\\":[").append("").append("]},");
       } else {
         std::string name = entry.path().filename().string();
         std::cmatch m;
         std::regex_search(name.c_str(), m, std::regex("^(.*)(.zip|( \\())"));
-
-        std::cout << m[1].length() << "\t" << entry.path().filename().string() << "\t" << m[1] << "\n";
-
-        jsonData.append("{\"type\": \"file\",\"name\": \"");
-        jsonData.append(m[1]).append("\",\"file name\": \"");
-        jsonData.append(entry.path().filename().string()).append("\"},");
+        // find the files not matched by regex
+        //if (m[1].length() == 0) std::cout << m[1].length() << "\t" << entry.path().filename().string() << "\t" << m[1] << "\n";
+        jsonData.append("{\\\"type\\\": \\\"file\\\",\\\"name\\\": \\\"");
+        jsonData.append(m[1]).append("\\\",\\\"file name\\\": \\\"");
+        jsonData.append(entry.path().filename().string()).append("\\\"},");
       }
     }
   } catch(const std::exception& e) {
     std::cerr << e.what() << '\n';
   }
-  //std::cout << jsonData << std::endl;
+  if (jsonData.back() == ',') jsonData.pop_back();
   return jsonData;
+}
+
+
+inline std::string ToUTF8(const String& str) {
+  String8 utf8 = str.utf8();
+  return std::string(utf8.data(), utf8.length());
+}
+
+inline const char* Stringify(MessageSource source) {
+  switch(source) {
+    case kMessageSource_XML: return "XML";
+    case kMessageSource_JS: return "JS";
+    case kMessageSource_Network: return "Network";
+    case kMessageSource_ConsoleAPI: return "ConsoleAPI";
+    case kMessageSource_Storage: return "Storage";
+    case kMessageSource_AppCache: return "AppCache";
+    case kMessageSource_Rendering: return "Rendering";
+    case kMessageSource_CSS: return "CSS";
+    case kMessageSource_Security: return "Security";
+    case kMessageSource_ContentBlocker: return "ContentBlocker";
+    case kMessageSource_Other: return "Other";
+    default: return "";
+  }
+}
+
+inline const char* Stringify(MessageLevel level) {
+  switch(level) {
+    case kMessageLevel_Log: return "Log";
+    case kMessageLevel_Warning: return "Warning";
+    case kMessageLevel_Error: return "Error";
+    case kMessageLevel_Debug: return "Debug";
+    case kMessageLevel_Info: return "Info";
+    default: return "";
+  }
+}
+
+//
+// Inherited from ViewListener::OnAddConsoleMessage
+//
+// Make sure that you bind 'MyApp' to 'View::set_view_listener'
+// to receive this event.
+//
+void MovieBrowser::OnAddConsoleMessage(View* caller,
+                                MessageSource source,
+                                MessageLevel level,
+                                const String& message,
+                                uint32_t line_number,
+                                uint32_t column_number,
+                                const String& source_id) {
+  
+  std::cout << "[Console]: [" << Stringify(source) << "] [" 
+            << Stringify(level) << "] " << ToUTF8(message);
+  
+  if (source == kMessageSource_JS) {
+    std::cout << " (" << ToUTF8(source_id) << " @ line " << line_number 
+              << ", col " << column_number << ")";
+  }
+  
+  std::cout << std::endl;
+  
 }

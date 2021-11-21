@@ -141,43 +141,84 @@ void MovieBrowser::OnChangeTitle(ultralight::View* caller,
   window_->SetTitle(title.utf8().data());
 }
 
+/**
+ * @brief Add a path to the list for scanning
+ * 
+ * @param newPath a complete string path
+ */
 void MovieBrowser::addPath(std::string newPath) {
   this->paths.push_back(newPath);
 }
 
+/**
+ * @brief Scan all the paths for files
+ * 
+ * @return std::string the JSON data of the scanned files
+ */
 std::string MovieBrowser::scanPaths(){
-  std::string jsonData = "{\\\"data\\\":[";
+  std::string scanData = "{\\\"data\\\":[";
   for(std::string path : paths) {
-    jsonData.append(this->scanDirectory(path));
+    // append all the paths scanned data
+    scanData.append(this->scanDirectory(path)).append(",");
   }
-  jsonData.append("]}");
-  return jsonData;
+  // remove the last comma, before closing the array
+  if (scanData.back() == ',') scanData.pop_back();
+  scanData.append("]}");
+  return scanData;
 }
 
-// Code from https://stackoverflow.com/questions/8149569/scan-a-directory-to-find-files-in-c
+/**
+ * @brief iterates through directory recursively to scann all the files in it
+ * 
+ * @param dir complete string path of the directory
+ * @return std::string JSON data of the files scanned
+ */
 std::string MovieBrowser::scanDirectory(std::string dir){
+  std::filesystem::path currDir = dir;
+
+  // check if currDir is TV show
+  if (std::regex_match(currDir.filename().string(), std::regex("(.*)\\(TV\\)"))) {
+    std::cout << "we are in a TVshow\n";
+    // TODO search for TV show ID
+  }
+  // check if currDir is TV season
+  if (std::regex_match(currDir.filename().string(), std::regex("^(.*)(\\(S[0-9]{2}\\))"))) {
+    std::cout << "we are in a TV season\n";
+    // TODO search for TV show and season ID
+  }
+  
   std::string jsonData = "";
   try {
-    //for (const auto& entry : std::filesystem::recursive_directory_iterator(dir)) {
     for (const auto& entry : std::filesystem::directory_iterator(dir)) {
+      // filename of the current entry (could be a file or a directory)
+      std::string filename = entry.path().filename().string();
       if (entry.is_directory()) {
-        jsonData.append("{\\\"type\\\": \\\"directory\\\",");
-        jsonData.append("\\\"name\\\":\\\"").append(entry.path().filename().string()).append("\\\",");
+        if (std::regex_match(filename, std::regex("(.*)\\(TV\\)"))) {
+          // this is a TV show
+          jsonData.append("{\\\"type\\\": \\\"tvshow\\\",");
+        } else {
+          if (std::regex_match(currDir.filename().string(), std::regex("^(.*)(\\(S[0-9]{2}\\))"))) {
+            // this is a TV season
+            jsonData.append("{\\\"type\\\": \\\"tvseason\\\",");
+          } else {
+            // this is a collection
+            jsonData.append("{\\\"type\\\": \\\"collection\\\",");
+          }
+        }
+        jsonData.append("\\\"name\\\":\\\"").append(filename).append("\\\",");
         jsonData.append("\\\"content\\\":[").append("").append("]},");
       } else {
-        std::string name = entry.path().filename().string();
         std::cmatch m;
-        //std::regex_search(name.c_str(), m, std::regex("^(.*)(.zip|( \\())"));
-        std::regex_search(name.c_str(), m, std::regex("^(.*)(\\.[a-z]+)"));
-        // find the files not matched by regex
-        //if (m[1].length() == 0) std::cout << m[1].length() << "\t" << entry.path().filename().string() << "\t" << m[1] << "\n";
-        jsonData.append("{\\\"type\\\": \\\"file\\\",\\\"name\\\": \\\"");
+        std::regex_search(filename.c_str(), m, std::regex("^(.*)(\\.[a-z]+)"));
+        // TODO regex for tv episodes
+        jsonData.append("{\\\"type\\\": \\\"movie\\\",\\\"name\\\": \\\"");
         jsonData.append(m[1]).append("\\\",\\\"file name\\\": \\\"");
-        jsonData.append(entry.path().filename().string()).append("\\\"},");
+        jsonData.append(filename).append("\\\"},");
       }
     }
     if (jsonData.back() == ',') jsonData.pop_back();
   } catch(const std::exception& e) {
+    // TODO unreadable directory
     std::cerr << e.what() << '\n';
   }
   return jsonData;

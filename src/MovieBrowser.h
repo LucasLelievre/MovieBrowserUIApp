@@ -1,12 +1,6 @@
 #pragma once
 #include <AppCore/AppCore.h>
 
-/*#include <unistd.h>
-#include <stdio.h>
-#include <dirent.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <stdlib.h>*/
 #include <iostream>
 #include <filesystem>
 #include <vector>

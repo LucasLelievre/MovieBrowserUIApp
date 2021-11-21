@@ -103,11 +103,9 @@ void MovieBrowser::OnDOMReady(ultralight::View* caller,
   ///
   /// This is the best time to setup any JavaScript bindings.
   ///
-
-  caller->EvaluateScript("pouet()");
-  
   this->addPath("/media/lucas/BAT-external disk/video/films/");
   this->addPath("D:\\video\\films");
+  this->addPath("/home/lucas/Videos");
   std::string scanData = this->scanPaths();
   //std::cout << scanData << std::endl;
   ultralight::String d = "{\\\"data\\\": [{\\\"type\\\": \\\"file\\\",\\\"name\\\": \\\"Matrix\\\",\\\"file name\\\": \\\"Matrix (1999).mkv\\\"}]}";
@@ -169,7 +167,8 @@ std::string MovieBrowser::scanDirectory(std::string dir){
       } else {
         std::string name = entry.path().filename().string();
         std::cmatch m;
-        std::regex_search(name.c_str(), m, std::regex("^(.*)(.zip|( \\())"));
+        //std::regex_search(name.c_str(), m, std::regex("^(.*)(.zip|( \\())"));
+        std::regex_search(name.c_str(), m, std::regex("^(.*)(\\.[a-z]+)"));
         // find the files not matched by regex
         //if (m[1].length() == 0) std::cout << m[1].length() << "\t" << entry.path().filename().string() << "\t" << m[1] << "\n";
         jsonData.append("{\\\"type\\\": \\\"file\\\",\\\"name\\\": \\\"");

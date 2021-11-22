@@ -42,7 +42,6 @@ h2 {
     display: none;
     position: fixed;
     z-index: 1;
-    padding-top: 6em;
     left: 0;
     top: 0;
     width: 100%;
@@ -53,7 +52,7 @@ h2 {
 .modalContent {
     display: flex;
     background-color: white;
-    margin: auto;
+    margin: 6em auto 3em auto;
     padding: 10px;
     border: 2px solid black;
     border-radius: 0.5em;
@@ -85,17 +84,35 @@ h2 {
     border-radius: 3px;
     margin-bottom: 0.3em;
 }
+.cardTVep{
+    margin-left: 1em;
+}
 .cardDate{
     font-family: Ubuntu-Bold-Italic;
     color: gray;
     text-align: end;
 }
 .movieInfo{
-    flex: 50%;
+    width: fit-content;
     padding: 10px;
+}
+.movieInfo .cardPoster {
+    min-width: 300px;
 }
 .description {
     text-align: justify;
+}
+.playButton {
+    margin: 0.5em;
+    padding: 0.5em;
+    border-radius: 5px;
+    background-color: orange;
+    text-transform: uppercase;
+    color: white;
+}
+.playButton:hover {
+    background-color: black;
+    counter-reset: white;
 }
 .footer {
     position: fixed;

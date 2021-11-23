@@ -1,5 +1,5 @@
 // get request on given url
-function getDataFromURL(url) {
+function requestAPI(url) {
     return new Promise(function (resolve, reject) {
         var xhr = new XMLHttpRequest();
         xhr.onreadystatechange = function () {
@@ -30,6 +30,75 @@ function sortByOriginalTitle(a, b) {
     return a.original_title > b.original_title;
 }
 
+function getMovieAPI(type, name, id, season, ep) {
+    if (type == "tvshow"){
+        return "https://api.themoviedb.org/3/search/tv?api_key=39556c17fbe9e58c430f6a811f19fb1c&query=" + encodeURIComponent(name);
+    }
+    if (type == "tvseason") {
+        return "https://api.themoviedb.org/3/tv/" + id + "/season/" + season + "?api_key=39556c17fbe9e58c430f6a811f19fb1c";
+    }
+    if (type == "tvep") {
+        return "https://api.themoviedb.org/3/tv/" + id + "/season/" + season + "/episode/" + ep + "?api_key=39556c17fbe9e58c430f6a811f19fb1c";
+    }
+    // movie or collection
+    return "https://api.themoviedb.org/3/search/" + type + "?api_key=39556c17fbe9e58c430f6a811f19fb1c&query="+encodeURIComponent(name);
+}
+
+function getMovieDataFromURL(url, movie) {
+    return requestAPI(url)
+    .then(function (result) {
+        // TODO what to do in case of no results
+        if (result.results.length < 1)
+            console.error("no result for " + url);
+        let firstResult = result.results[0];
+        // populates JSON object with online data
+        movie["id"] = firstResult.id;
+        movie["original_title"] = (movie.type == "movie") ? firstResult.original_title : firstResult.original_name;
+        movie["poster_path"] = firstResult.poster_path;
+        movie["overview"] = firstResult.overview;
+
+        // If element is a TV season, look for more data
+        if (movie.type == "tvseason") {
+            return requestAPI(getMovieAPI(movie.type, "", movie.id, movie.season, ""))
+            .then(function (result) {
+                movie["id"] = result.id;
+                movie["release_date"] = result.air_date;
+                movie["episodes"] = result.episodes;
+                if (result.overview.length > 0) movie["overview"] = result.overview;
+                return movie;
+            }).catch(function(reason){
+                // TODO create error card
+                console.error("Could not retrieve TV season data :");
+                console.error(reason);
+            });
+        }
+        // If element is a TV episode, look for more data
+        if (movie.type == "tvep") {
+            return requestAPI(getMovieAPI(movie.type, "", movie.id, movie.season, movie.episode))
+            .then(function (result) {
+                movie["id"] = result.id;
+                movie["release_date"] = result.air_date;
+                movie["episodes"] = result.episodes;
+                if (result.overview.length > 0) movie["overview"] = result.overview;
+                return movie;
+            }).catch(function(reason){
+                // TODO create error card
+                console.error("Could not retrieve TV episode data :");
+                console.error(reason);
+            });
+        }
+
+        movie["release_date"] = firstResult.release_date;
+        return movie;
+    }).catch(function (reason) {
+        // TODO create error card
+        console.log(url);
+        console.error("A problem occured while retreiving online data :");
+        console.error(reason);
+        //movieList.appendChild(createCard(0, "Error API", "img/missing_poster.png", reason, "error api"));
+    });
+}
+
 // Update the cards from given JSON data
 function refreshMovieCards(scannedData) {
     movieList = document.getElementById("movieList");
@@ -41,60 +110,12 @@ function refreshMovieCards(scannedData) {
     JSON.parse(scannedData).data.forEach(element => {
         // create url request
         let url = "";
-        switch (element.type) {
-            case "collection":
-                url = "https://api.themoviedb.org/3/search/collection?api_key=39556c17fbe9e58c430f6a811f19fb1c&query="+encodeURIComponent(element.name);
-                break;
-            case "movie":
-                url = "https://api.themoviedb.org/3/search/movie?api_key=39556c17fbe9e58c430f6a811f19fb1c&query="+encodeURIComponent(element.name);
-                break;
-            case "tvshow":
-                url = "https://api.themoviedb.org/3/search/tv?api_key=39556c17fbe9e58c430f6a811f19fb1c&query="+encodeURIComponent(element.name);
-                break;
-            case "tvseason":
-                url = "https://api.themoviedb.org/3/search/tv?api_key=39556c17fbe9e58c430f6a811f19fb1c&query="+encodeURIComponent(element.name);
-                break;
-            default:
-                url = "https://api.themoviedb.org/3/search/multi?api_key=39556c17fbe9e58c430f6a811f19fb1c&query="+encodeURIComponent(element.name);
-                break;
+        if (element.type == "tvseason" || element.type == "tvep") {
+            url = getMovieAPI("tvshow", element.name, "", "", "");
+        } else {
+            url = getMovieAPI(element.type, element.name, "", "", "");
         }
-        promises.push(
-            getDataFromURL(url)
-            .then(function (result) {
-                // TODO what to do in case of no results
-                let firstResult = result.results[0];
-                // populates JSON object with online data
-                element["id"] = firstResult.id;
-                element["original_title"] = (element.type == "movie") ? firstResult.original_title : firstResult.original_name;
-                element["poster_path"] = firstResult.poster_path;
-                element["overview"] = firstResult.overview;
-
-                // If element is a TV season, look for more data
-                if (element.type == "tvseason") {
-                    return getDataFromURL("https://api.themoviedb.org/3/tv/"+element.id+"/season/"+element.season+"?api_key=39556c17fbe9e58c430f6a811f19fb1c")
-                    .then(function (result) {
-                        element["id"] = result.id;
-                        element["release_date"] = result.air_date;
-                        element["episodes"] = result.episodes;
-                        if (result.overview.length > 0) element["overview"] = result.overview;
-                        return element;
-                    }).catch(function(reason){
-                        // TODO create error card
-                        console.error("Could not retrieve TV season data :");
-                        console.error(reason);
-                    });
-                } else {
-                    element["release_date"] = firstResult.release_date;
-                }
-                return element;
-            }).catch(function (reason) {
-                // TODO create error card
-                console.log(url);
-                console.error("A problem occured while retreive online data :");
-                console.error(reason);
-                //movieList.appendChild(createCard(0, "Error API", "img/missing_poster.png", reason, "error api"));
-            })
-        );
+        promises.push(getMovieDataFromURL(url, element));
     });
     Promise.all(promises)
     .then(function (response) {
@@ -106,81 +127,112 @@ function refreshMovieCards(scannedData) {
             movieList.appendChild(createCard(result, "https://image.tmdb.org/t/p/w500"));
         });
     }).catch(function (reason) {
-        console.error("A problem occured while create cards :");
+        console.error("A problem occured while creating cards :");
         console.error(reason);
     });
 }
 
 // Create a card visualisation of a JSON object
 function createCard(cardData, posterURL){
+    // Image on the card
+    let cardPoster = document.createElement("img");
+    cardPoster.classList.add("cardPoster");
+    cardPoster.setAttribute("alt", "movie cardPoster");
+    cardPoster.setAttribute("src", posterURL + cardData.poster_path);
+    // Title of the card
+    let cardTitle = document.createElement("div");
+    cardTitle.classList.add("cardTitle");
+    cardTitle.innerText = cardData.original_title;
+    // Card itself
     let card = document.createElement("a");
     card.classList.add("card");
     card.classList.add("modalButton");
-    card.setAttribute("id", "card_"+cardData.id);
-        let cardPoster = document.createElement("img");
-        cardPoster.classList.add("cardPoster");
-        cardPoster.setAttribute("alt", "movie cardPoster");
-        cardPoster.setAttribute("src", posterURL+cardData.poster_path);
-        let cardTitle = document.createElement("div");
-        cardTitle.classList.add("cardTitle");
-        cardTitle.innerText = cardData.original_title;
+    card.setAttribute("id", "card_" + cardData.id);
     card.appendChild(cardPoster);
     card.appendChild(cardTitle);
-    if (cardData.type == "tvseason") {
-        let cardSeason = document.createElement("span");
-        cardSeason.classList.add("cardTVep");
-        cardSeason.innerText = "Season "+cardData.season;
-        cardTitle.appendChild(cardSeason);
+    if (cardData.type == "tvseason" || cardData.type == "tvep") {
+        // Season and episode number
+        let cardTVinfo = document.createElement("div");
+        cardTVinfo.classList.add("cardInfo");
+        cardTVinfo.classList.add("item-float-left");
+        cardTVinfo.innerText = "S" + cardData.season;
+        cardTVinfo.innerText += cardData.type == "tvep" ? "E" + cardData.episode : "";
+        card.appendChild(cardTVinfo);
     }
     if (cardData.release_date != undefined) {
+        // Release data if any
         let cardDate = document.createElement("div");
-        cardDate.classList.add("cardDate");
-        cardDate.innerText = "(" + cardData.release_date + ")";
+        cardDate.classList.add("cardInfo");
+        cardDate.classList.add("item-float-right");
+        cardDate.innerText = cardData.release_date;
         card.appendChild(cardDate);
     }
-    // Modal div control
-    card.addEventListener("click", function (event) { document.getElementById(this.attributes["id"].value + "_modal").style.display = "block";});
+    // Modal box control
+    card.addEventListener("click", function (event) { document.getElementById(this.attributes["id"].value + "_modal").style.display = "block"; });
 
-    let modalDiv = document.createElement("div");
-    modalDiv.classList.add("modalDiv");
-    modalDiv.setAttribute("id", "card_"+cardData.id+"_modal");
-        let modalContent = document.createElement("div");
-        modalContent.classList.add("modalContent");
-            let mil = document.createElement("div");
-            mil.classList.add("movieInfo");
-            mil.appendChild(cardPoster.cloneNode(true));
-            let mir = document.createElement("div");
-            mir.classList.add("movieInfo");
-                let miTitle = document.createElement("h2");
-                miTitle.innerText = cardData.original_title;
-                let miDescr = document.createElement("p");
-                miDescr.classList.add("description");
-                miDescr.innerText = cardData.overview;
-            mir.appendChild(miTitle);
-            mir.appendChild(miDescr);
-            if (cardData.type == "movie"){
-                let play = document.createElement("a");
-                play.classList.add("playButton");
-                //TODO play button for movies
-                play.setAttribute("id", "movie_file_name");
-                play.setAttribute("href", "#");
-                play.innerText = "play the movie";
-                mir.appendChild(play);
-            }
-        modalContent.appendChild(mil);
-        modalContent.appendChild(mir);
-    modalDiv.appendChild(modalContent);
-
+    // Image of the modal box
+    let modalPoster = document.createElement("div");
+    modalPoster.classList.add("modalPoster");
+    modalPoster.appendChild(cardPoster.cloneNode(true));
+    
+    // Title of the modal box
+    let modalTitle = document.createElement("h2");
+    modalTitle.innerText = cardData.original_title;
+    // Close modal box Button
+    let modalClose = document.createElement("a");
+    modalClose.classList.add("item-float-right");
+    modalClose.innerText = "(X)"
+    // Desciption of the modal box
+    let modalOverview = document.createElement("p");
+    modalOverview.classList.add("overview");
+    modalOverview.innerText = cardData.overview;
+    // Container of the title, discriotion, playbutton, and sub list
+    let modalInfo = document.createElement("div");
+    modalInfo.classList.add("modalInfo");
+    modalInfo.appendChild(modalClose);
+    modalInfo.appendChild(modalTitle);
+    modalInfo.appendChild(modalOverview);
+    if (cardData.type == "movie" || cardData.type == "tvep") {
+        // Play button for movies and TV episodes
+        let play = document.createElement("a");
+        play.classList.add("playButton");
+        play.setAttribute("id", "movie_file_name");
+        play.setAttribute("href", "#");
+        play.innerText = "play the " + (cardData.type == "tvep" ? "episode" : "movie");
+        //TODO play button for movies
+        modalInfo.appendChild(play);
+    } else {
+        // Sub list of cards
+        let subCollection = document.createElement("div");
+        subCollection.classList.add("responsiveGrid");
+        subCollection.setAttribute("id", "sublist_" + cardData.id);
+        cardData.content.forEach(function (elem) {
+            // TODO get online data + create cards
+            subCollection.innerText += elem.name;
+        });
+        modalInfo.appendChild(subCollection);
+    }
+    // Container of the modal box content
+    let modalContent = document.createElement("div");
+    modalContent.classList.add("modalContent");
+    modalContent.appendChild(modalPoster);
+    modalContent.appendChild(modalInfo);
+    // Modal box itself
+    let modalBox = document.createElement("div");
+    modalBox.classList.add("modalBox");
+    modalBox.setAttribute("id", "card_"+cardData.id+"_modal");
+    modalBox.appendChild(modalContent);
+    // return card and modal box
     let output = document.createDocumentFragment();
     output.append(card);
-    output.append(modalDiv);
+    output.append(modalBox);
     return output;
 }
 
 // Set the event listeners
 function setEventListeners(){
     window.addEventListener("click", function(event){
-        if(event.target.classList.contains("modalDiv")) event.target.style.display = "none";
+        if(event.target.classList.contains("modalBox")) event.target.style.display = "none";
     });
 
     var anchors = document.getElementsByTagName("a");
@@ -198,10 +250,18 @@ function setEventListeners(){
 }
 
 window.onload = function(){
-    refreshMovieCards(
-        "{\"data\":[{\"type\": \"movie\",\"name\": \"the matrix\",\"file name\": \"the matrix.mkv\"},\
-        {\"type\": \"collection\",\"name\":\"james bond\",\"content\":[]},\
-        {\"type\": \"tvshow\",\"name\": \"witcher\",\"file name\": \"witcher (TV)\"},\
-        {\"type\": \"tvseason\",\"name\": \"loki\", \"season\":\"1\",\"file name\": \"loki (S01)\"}]}");
+    let input = "{\"data\":[\
+        {\"type\": \"movie\",\"name\": \"the matrix\",\"file name\": \"the matrix.mkv\"},\
+        {\"type\": \"collection\",\"name\":\"james bond\",\"content\":[\
+            {\"type\": \"movie\",\"name\": \"skyfall\",\"file name\": \"skyfall.mkv\"}]},\
+        {\"type\": \"tvshow\",\"name\": \"witcher\",\"file name\": \"witcher (TV)\",\"content\":[\
+            {\"type\": \"tvseason\",\"name\": \"the witcher\", \"season\":\"1\",\"file name\": \"the witcher (S01)\",\"content\":[\
+                {\"type\":\"tvep\",\"name\":\"the witcher\", \"season\":\"1\", \"episode\":\"1\",\"file name\": \"the witcher (S01E01)\"}]}]},\
+        {\"type\": \"tvseason\",\"name\": \"loki\", \"season\":\"1\",\"file name\": \"loki (S01)\",\"content\":[\
+            {\"type\":\"tvep\",\"name\":\"loki\", \"season\":\"1\", \"episode\":\"1\",\"file name\": \"loki (S01E01)\"}]},\
+        {\"type\":\"tvep\",\"name\":\"legion\", \"season\":\"1\", \"episode\":\"1\",\"file name\": \"legion (S01E01)\"}\
+    ]}";
+    // console.log(input);
+    refreshMovieCards(input);
     setEventListeners();
 };

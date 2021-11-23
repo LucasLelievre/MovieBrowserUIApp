@@ -7,30 +7,49 @@
 body {
     font-family: Ubuntu-Regular, sans-serif;
     margin-bottom: 2.5em;
-}
-a:hover {
-    color: purple;
-}
-.header {
-    background-color: #191919;
-    text-align: center;
-    overflow: hidden;
-    padding: 0.7em;
+    background-color: black;
 }
 h1 {
     font-family: Ubuntu-Bold-Italic;
     font-size: 3em;
     color: white;
-    float: left;
 }
 h2 {
     font-family: Ubuntu-Bold-Italic;
     font-size: 2.5em;
     margin-bottom: 0.5em;
 }
+a:hover {
+    color: purple;
+}
+.header {
+    background-color: #191919;
+    overflow: hidden;
+    padding: 0.7em;
+}
+.footer {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    background-color: #191919;
+    color: white;
+    text-align: center;
+    padding: 0.7em;
+    font-size: 0.7em;
+}
+.item-float-left {
+    float: left;
+}
+.item-float-right {
+    float: right;
+}
+.weblink {
+    color: white;
+    font-family: Ubuntu-Bold;
+}
 #settings{
     color: white;
-    float: right;
     font-size: 2em;
     padding: 0.3em;
 }
@@ -38,7 +57,40 @@ h2 {
     color: purple;
     text-shadow: 0px 0px 5px white;
 }
-.modalDiv {
+/* Card List */
+.responsiveGrid{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1em;
+    padding: 10px;
+    justify-items: center;
+}
+.card{
+    display: block;
+    width: 11em;
+    margin: 0.3em;
+    padding: 0.3em;
+    border: 2px solid lightgrey;
+    border-radius: 0.5em;
+    background-color: white;
+    transition: 0.3s;
+}
+.card:hover{
+    border-color: rgb(128, 0, 128);
+    box-shadow: 0 8px 16px 0 rgba(128,0,128,1);
+}
+.cardPoster{
+    width: 100%;
+    height: auto;
+    border-radius: 3px;
+    margin-bottom: 0.3em;
+}
+.cardInfo{
+    font-family: Ubuntu-Bold-Italic;
+    color: gray;
+}
+/* Modal Box */
+.modalBox {
     display: none;
     position: fixed;
     z-index: 1;
@@ -58,52 +110,20 @@ h2 {
     border-radius: 0.5em;
     width: 80%;
 }
-.responsiveGrid{
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 1em;
-    padding: 10px;
-}
-.card{
-    display: block;
-    width: 11em;
-    margin: 0.3em;
-    padding: 0.3em;
-    border: 2px solid lightgrey;
-    border-radius: 0.5em;
-    background-color: white;
-    transition: 0.3s;
-}
-.card:hover{
-    border-color: purple;
-    box-shadow: 0 8px 16px 0 rgba(0,0,0,0.5);
-}
-.cardPoster{
-    width: 100%;
-    height: auto;
-    border-radius: 3px;
-    margin-bottom: 0.3em;
-}
-.cardTVep{
-    margin-left: 1em;
-}
-.cardDate{
-    font-family: Ubuntu-Bold-Italic;
-    color: gray;
-    text-align: end;
-}
-.movieInfo{
-    width: fit-content;
-    padding: 10px;
-}
-.movieInfo .cardPoster {
+.modalPoster {
     min-width: 300px;
+    padding: 10px;
+    flex: 1;
 }
-.description {
+.modalInfo{
+    padding: 10px;
+    flex: 3;
+}
+.overview {
     text-align: justify;
 }
 .playButton {
-    margin: 0.5em;
+    margin: auto;
     padding: 0.5em;
     border-radius: 5px;
     background-color: orange;
@@ -113,19 +133,4 @@ h2 {
 .playButton:hover {
     background-color: black;
     counter-reset: white;
-}
-.footer {
-    position: fixed;
-    left: 0;
-    bottom: 0;
-    width: 100%;
-    background-color: #191919;
-    color: white;
-    text-align: center;
-    padding: 0.7em;
-    font-size: 0.7em;
-}
-.weblink {
-    color: white;
-    font-family: Ubuntu-Bold;
 }

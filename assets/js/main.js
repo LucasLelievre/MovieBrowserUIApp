@@ -74,9 +74,12 @@ function getMovieDataFromURL(url, movie) {
         }
         // If element is a TV episode, look for more data
         if (movie.type == "tvep") {
+            console.log(getMovieAPI(movie.type, "", movie.id, movie.season, movie.episode));
             return requestAPI(getMovieAPI(movie.type, "", movie.id, movie.season, movie.episode))
             .then(function (result) {
                 movie["id"] = result.id;
+                movie["original_title"] = result.name;
+                movie["poster_path"] = result.still_path
                 movie["release_date"] = result.air_date;
                 movie["episodes"] = result.episodes;
                 if (result.overview.length > 0) movie["overview"] = result.overview;
@@ -100,14 +103,13 @@ function getMovieDataFromURL(url, movie) {
 }
 
 // Update the cards from given JSON data
-function refreshMovieCards(scannedData) {
-    movieList = document.getElementById("movieList");
+function refreshMovieCards(scannedData, cardList) {
     // empty the list
-    movieList.innerHTML = "";
+    cardList.innerHTML = "";
     let promises = [];
 
     // create a promise for each element in the JSON
-    JSON.parse(scannedData).data.forEach(element => {
+    scannedData.content.forEach(element => {
         // create url request
         let url = "";
         if (element.type == "tvseason" || element.type == "tvep") {
@@ -124,7 +126,7 @@ function refreshMovieCards(scannedData) {
         response.sort(sortByOriginalTitle);
         // Create and add the cards in html
         response.forEach(function (result) {
-            movieList.appendChild(createCard(result, "https://image.tmdb.org/t/p/w500"));
+            cardList.appendChild(createCard(result, "https://image.tmdb.org/t/p/w500"));
         });
     }).catch(function (reason) {
         console.error("A problem occured while creating cards :");
@@ -178,6 +180,13 @@ function createCard(cardData, posterURL){
     // Title of the modal box
     let modalTitle = document.createElement("h2");
     modalTitle.innerText = cardData.original_title;
+    if (cardData.type == "tvseason") {
+        let modalSeason = document.createElement("div");
+        modalSeason.classList.add("modalSeason");
+        modalSeason.innerText = "S" + cardData.season;
+        modalTitle.appendChild(modalSeason);
+    }
+
     // Close modal box Button
     let modalClose = document.createElement("a");
     modalClose.classList.add("item-float-right");
@@ -191,6 +200,7 @@ function createCard(cardData, posterURL){
     modalInfo.classList.add("modalInfo");
     modalInfo.appendChild(modalClose);
     modalInfo.appendChild(modalTitle);
+    
     modalInfo.appendChild(modalOverview);
     if (cardData.type == "movie" || cardData.type == "tvep") {
         // Play button for movies and TV episodes
@@ -206,15 +216,14 @@ function createCard(cardData, posterURL){
         let subCollection = document.createElement("div");
         subCollection.classList.add("responsiveGrid");
         subCollection.setAttribute("id", "sublist_" + cardData.id);
-        cardData.content.forEach(function (elem) {
-            // TODO get online data + create cards
-            subCollection.innerText += elem.name;
-        });
         modalInfo.appendChild(subCollection);
+        refreshMovieCards(cardData, subCollection);
     }
     // Container of the modal box content
     let modalContent = document.createElement("div");
     modalContent.classList.add("modalContent");
+    if (cardData.type == "tvseason") modalContent.classList.add("tvseason");
+    if (cardData.type == "tvep") modalContent.classList.add("tvep");
     modalContent.appendChild(modalPoster);
     modalContent.appendChild(modalInfo);
     // Modal box itself
@@ -249,8 +258,8 @@ function setEventListeners(){
     }
 }
 
-window.onload = function(){
-    let input = "{\"data\":[\
+/*window.onload = function(){
+    let input = "{\"content\":[\
         {\"type\": \"movie\",\"name\": \"the matrix\",\"file name\": \"the matrix.mkv\"},\
         {\"type\": \"collection\",\"name\":\"james bond\",\"content\":[\
             {\"type\": \"movie\",\"name\": \"skyfall\",\"file name\": \"skyfall.mkv\"}]},\
@@ -258,10 +267,9 @@ window.onload = function(){
             {\"type\": \"tvseason\",\"name\": \"the witcher\", \"season\":\"1\",\"file name\": \"the witcher (S01)\",\"content\":[\
                 {\"type\":\"tvep\",\"name\":\"the witcher\", \"season\":\"1\", \"episode\":\"1\",\"file name\": \"the witcher (S01E01)\"}]}]},\
         {\"type\": \"tvseason\",\"name\": \"loki\", \"season\":\"1\",\"file name\": \"loki (S01)\",\"content\":[\
-            {\"type\":\"tvep\",\"name\":\"loki\", \"season\":\"1\", \"episode\":\"1\",\"file name\": \"loki (S01E01)\"}]},\
-        {\"type\":\"tvep\",\"name\":\"legion\", \"season\":\"1\", \"episode\":\"1\",\"file name\": \"legion (S01E01)\"}\
+            {\"type\":\"tvep\",\"name\":\"loki\", \"season\":\"1\", \"episode\":\"1\",\"file name\": \"loki (S01E01)\"}]}\
     ]}";
     // console.log(input);
-    refreshMovieCards(input);
+    refreshMovieCards(JSON.parse(input), document.getElementById("movieList"));
     setEventListeners();
-};
+};*/

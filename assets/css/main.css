@@ -25,7 +25,7 @@ a:hover {
 .header {
     background-color: #191919;
     overflow: hidden;
-    padding: 0.7em;
+    padding: 1em;
 }
 .footer {
     position: fixed;
@@ -115,7 +115,13 @@ a:hover {
     padding: 10px;
     flex: 1;
 }
+.modalSeason {
+    display: inline;
+    color: gray;
+    margin-left: 1em;
+}
 .modalInfo{
+    position: relative;
     padding: 10px;
     flex: 3;
 }
@@ -123,7 +129,11 @@ a:hover {
     text-align: justify;
 }
 .playButton {
-    margin: auto;
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+
     padding: 0.5em;
     border-radius: 5px;
     background-color: orange;

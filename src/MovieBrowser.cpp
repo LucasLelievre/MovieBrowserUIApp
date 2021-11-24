@@ -108,8 +108,8 @@ void MovieBrowser::OnDOMReady(ultralight::View* caller,
   this->addPath("/home/lucas/Videos");
   std::string scanData = this->scanPaths();
   //std::cout << scanData << std::endl;
-  ultralight::String d = "{\\\"data\\\": [{\\\"type\\\": \\\"file\\\",\\\"name\\\": \\\"Matrix\\\",\\\"file name\\\": \\\"Matrix (1999).mkv\\\"}]}";
-  ultralight::String jsFunc = "refreshMovieCards(\"" + ultralight::String(scanData.c_str()) + "\")";
+  ultralight::String d = "{\\\"content\\\": [{\\\"type\\\": \\\"file\\\",\\\"name\\\": \\\"Matrix\\\",\\\"file name\\\": \\\"Matrix (1999).mkv\\\"}]}";
+  ultralight::String jsFunc = "refreshMovieCards(JSON.parse(\"" + ultralight::String(scanData.c_str()) + "\"), document.getElementById(\"movieList\"))";
   caller->EvaluateScript(jsFunc);
   
   /*ultralight::String jsFunc = "refreshMovieList(\"";
@@ -156,7 +156,7 @@ void MovieBrowser::addPath(std::string newPath) {
  * @return std::string the JSON data of the scanned files
  */
 std::string MovieBrowser::scanPaths(){
-  std::string scanData = "{\\\"data\\\":[";
+  std::string scanData = "{\\\"content\\\":[";
   for(std::string path : paths) {
     // append all the paths scanned data
     scanData.append(this->scanDirectory(path)).append(",");
@@ -174,46 +174,55 @@ std::string MovieBrowser::scanPaths(){
  * @return std::string JSON data of the files scanned
  */
 std::string MovieBrowser::scanDirectory(std::string dir){
-  std::filesystem::path currDir = dir;
-
-  // check if currDir is TV show
-  if (std::regex_match(currDir.filename().string(), std::regex("(.*)\\(TV\\)"))) {
-    std::cout << "we are in a TVshow\n";
-    // TODO search for TV show ID
-  }
-  // check if currDir is TV season
-  if (std::regex_match(currDir.filename().string(), std::regex("^(.*)(\\(S[0-9]{2}\\))"))) {
-    std::cout << "we are in a TV season\n";
-    // TODO search for TV show and season ID
-  }
-  
   std::string jsonData = "";
   try {
     for (const auto& entry : std::filesystem::directory_iterator(dir)) {
       // filename of the current entry (could be a file or a directory)
       std::string filename = entry.path().filename().string();
+      // regex matches on the element's names
+      std::cmatch m;
+      std::regex exp ("((\\w+\\ ?)+)((\\(TV\\))?(\\(S(\\d+)\\))?(\\(S(\\d+)E(\\d+)\\))?(\\ ?\\(\\d+\\))?(\\.\\w+)?)");
+      std::regex_match(filename.c_str(), m, exp);
+      // Add the complete filename
+      jsonData.append("{\\\"filename\\\":\\\"").append(entry.path().string()).append("\\\",");
+      // Add the element's name only (not the series number, etc)
+      jsonData.append("\\\"name\\\":\\\"").append(m[1]).append("\\\",");
+
+      std::cout <<filename<<"\n";
+      for (int i = 0; i < 15; i++) { std::cout << m[i] << "\t"; }
+      std::cout << "\n";
+      
+
+      // If the element is a directory
       if (entry.is_directory()) {
-        if (std::regex_match(filename, std::regex("(.*)\\(TV\\)"))) {
-          // this is a TV show
-          jsonData.append("{\\\"type\\\": \\\"tvshow\\\",");
-        } else {
-          if (std::regex_match(currDir.filename().string(), std::regex("^(.*)(\\(S[0-9]{2}\\))"))) {
-            // this is a TV season
-            jsonData.append("{\\\"type\\\": \\\"tvseason\\\",");
-          } else {
-            // this is a collection
-            jsonData.append("{\\\"type\\\": \\\"collection\\\",");
-          }
+        switch (m[3].length()) {
+        case 4:
+          // it's a TV show
+          jsonData.append("\\\"type\\\":\\\"tvshow\\\",");
+          break;
+        case 5:
+          // it's a TV season
+          jsonData.append("\\\"type\\\":\\\"tvseason\\\",");
+          jsonData.append("\\\"season\\\":\\\"").append(std::to_string(std::stoi(m[6]))).append("\\\",");
+          break;
+        default:
+          //  it's collection of movies
+          jsonData.append("\\\"type\\\":\\\"collection\\\",");
+          break;
         }
-        jsonData.append("\\\"name\\\":\\\"").append(filename).append("\\\",");
+        // recursively add directory's content
+        //jsonData.append("\\\"content\\\":[").append(scanDirectory(entry.path().string())).append("]},");
         jsonData.append("\\\"content\\\":[").append("").append("]},");
-      } else {
-        std::cmatch m;
-        std::regex_search(filename.c_str(), m, std::regex("^(.*)(\\.[a-z]+)"));
-        // TODO regex for tv episodes
-        jsonData.append("{\\\"type\\\": \\\"movie\\\",\\\"name\\\": \\\"");
-        jsonData.append(m[1]).append("\\\",\\\"file name\\\": \\\"");
-        jsonData.append(filename).append("\\\"},");
+      } else { // it is a file
+        // if the match begins with a parenthesis, then it's a TV episode
+        if (m[3].str()[0] == '(') {
+          jsonData.append("\\\"type\\\":\\\"tvep\\\",");
+          jsonData.append("\\\"season\\\":\\\"").append(std::to_string(std::stoi(m[8]))).append("\\\",");
+          jsonData.append("\\\"episode\\\":\\\"").append(std::to_string(std::stoi(m[9]))).append("\\\"},");
+        } else {
+          // else it is a movie
+          jsonData.append("\\\"type\\\":\\\"movie\\\"},");
+        }
       }
     }
     if (jsonData.back() == ',') jsonData.pop_back();

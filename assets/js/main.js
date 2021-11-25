@@ -30,36 +30,47 @@ function sortByOriginalTitle(a, b) {
     return a.original_title > b.original_title;
 }
 
-function getMovieAPI(type, name, id, season, ep) {
-    if (type == "tvshow"){
-        return "https://api.themoviedb.org/3/search/tv?api_key=39556c17fbe9e58c430f6a811f19fb1c&query=" + encodeURIComponent(name);
+function getMovieAPI(type, name, year, id, season, ep) {
+    switch (type) {
+        case "tvshow":
+            return "https://api.themoviedb.org/3/search/tv?api_key=39556c17fbe9e58c430f6a811f19fb1c&query=" + encodeURIComponent(name);
+        case "tvseason":
+            return "https://api.themoviedb.org/3/tv/" + id + "/season/" + season + "?api_key=39556c17fbe9e58c430f6a811f19fb1c";
+        case "tvep":
+            return "https://api.themoviedb.org/3/tv/" + id + "/season/" + season + "/episode/" + ep + "?api_key=39556c17fbe9e58c430f6a811f19fb1c";
+        default:
+            // movie or collection
+            return "https://api.themoviedb.org/3/search/" + type + "?api_key=39556c17fbe9e58c430f6a811f19fb1c&query="+encodeURIComponent(name)+"&year="+year;
     }
-    if (type == "tvseason") {
-        return "https://api.themoviedb.org/3/tv/" + id + "/season/" + season + "?api_key=39556c17fbe9e58c430f6a811f19fb1c";
-    }
-    if (type == "tvep") {
-        return "https://api.themoviedb.org/3/tv/" + id + "/season/" + season + "/episode/" + ep + "?api_key=39556c17fbe9e58c430f6a811f19fb1c";
-    }
-    // movie or collection
-    return "https://api.themoviedb.org/3/search/" + type + "?api_key=39556c17fbe9e58c430f6a811f19fb1c&query="+encodeURIComponent(name);
 }
 
 function getMovieDataFromURL(url, movie) {
     return requestAPI(url)
     .then(function (result) {
         // TODO what to do in case of no results
-        if (result.results.length < 1)
-            console.error("no result for " + url);
+        if (result.results.length < 1) {
+            if (movie.name == "Marvel Cinematic Universe") {
+                movie["id"]="MCU";
+                movie["original_title"]=movie.name;
+                movie["poster_path"]="img/MCU.png";
+                movie["overview"] = "Movies and TV series taking place in the Marvel Cinematic Universe";
+                return movie
+                //TODO does it work
+            }
+            console.log(url);
+            return createErrorJSON(movie, "no results from API query");
+        }
+
         let firstResult = result.results[0];
         // populates JSON object with online data
         movie["id"] = firstResult.id;
         movie["original_title"] = (movie.type == "movie") ? firstResult.original_title : firstResult.original_name;
-        movie["poster_path"] = firstResult.poster_path;
+        movie["poster_path"] = "https://image.tmdb.org/t/p/w500" + firstResult.poster_path;
         movie["overview"] = firstResult.overview;
 
         // If element is a TV season, look for more data
         if (movie.type == "tvseason") {
-            return requestAPI(getMovieAPI(movie.type, "", movie.id, movie.season, ""))
+            return requestAPI(getMovieAPI(movie.type, "", movie.fileYear, movie.id, movie.season, ""))
             .then(function (result) {
                 movie["id"] = result.id;
                 movie["release_date"] = result.air_date;
@@ -67,43 +78,37 @@ function getMovieDataFromURL(url, movie) {
                 if (result.overview.length > 0) movie["overview"] = result.overview;
                 return movie;
             }).catch(function(reason){
-                // TODO create error card
-                console.error("Could not retrieve TV season data :");
-                console.error(reason);
+                return createErrorJSON(movie, "could not retreive TV season data");
             });
         }
         // If element is a TV episode, look for more data
         if (movie.type == "tvep") {
-            console.log(getMovieAPI(movie.type, "", movie.id, movie.season, movie.episode));
-            return requestAPI(getMovieAPI(movie.type, "", movie.id, movie.season, movie.episode))
+            return requestAPI(getMovieAPI(movie.type, "", movie.fileYear, movie.id, movie.season, movie.episode))
             .then(function (result) {
                 movie["id"] = result.id;
                 movie["original_title"] = result.name;
-                movie["poster_path"] = result.still_path
+                movie["poster_path"] = "https://image.tmdb.org/t/p/w500" + result.still_path
                 movie["release_date"] = result.air_date;
                 movie["episodes"] = result.episodes;
                 if (result.overview.length > 0) movie["overview"] = result.overview;
                 return movie;
             }).catch(function(reason){
-                // TODO create error card
-                console.error("Could not retrieve TV episode data :");
-                console.error(reason);
+                return createErrorJSON(movie, "could not retreive TV episode data");
             });
         }
 
         movie["release_date"] = firstResult.release_date;
         return movie;
     }).catch(function (reason) {
-        // TODO create error card
-        console.log(url);
-        console.error("A problem occured while retreiving online data :");
-        console.error(reason);
-        //movieList.appendChild(createCard(0, "Error API", "img/missing_poster.png", reason, "error api"));
+        if (movie.name == "") {
+            return createErrorJSON(movie, "File name incorrectly parsed");
+        }
+        return createErrorJSON(movie, "an error occured while retreiving online data");
     });
 }
 
 // Update the cards from given JSON data
-function refreshMovieCards(scannedData, cardList) {
+function refreshMovieCards(scannedData, cardList, sortFunc) {
     // empty the list
     cardList.innerHTML = "";
     let promises = [];
@@ -113,20 +118,19 @@ function refreshMovieCards(scannedData, cardList) {
         // create url request
         let url = "";
         if (element.type == "tvseason" || element.type == "tvep") {
-            url = getMovieAPI("tvshow", element.name, "", "", "");
+            url = getMovieAPI("tvshow", element.name, element.fileYear, "", "", "");
         } else {
-            url = getMovieAPI(element.type, element.name, "", "", "");
+            url = getMovieAPI(element.type, element.name, element.fileYear, "", "", "");
         }
         promises.push(getMovieDataFromURL(url, element));
     });
     Promise.all(promises)
     .then(function (response) {
-        console.log(response);
         // sort JSON objects
-        response.sort(sortByOriginalTitle);
+        response.sort(sortFunc);
         // Create and add the cards in html
         response.forEach(function (result) {
-            cardList.appendChild(createCard(result, "https://image.tmdb.org/t/p/w500"));
+            cardList.appendChild(createCard(result));
         });
     }).catch(function (reason) {
         console.error("A problem occured while creating cards :");
@@ -134,13 +138,45 @@ function refreshMovieCards(scannedData, cardList) {
     });
 }
 
+function createErrorJSON(object, error){
+    let obj = {
+        type : "error",
+        movie : object,
+        reason : error
+    }
+    console.error(obj);
+    return obj;
+}
+
+function createErrorCard(errorCard){
+    let card = document.createElement("div");
+    card.classList.add("card");
+    let cardPoster = document.createElement("img");
+    cardPoster.classList.add("cardPoster");
+    cardPoster.setAttribute("alt", "error movie");
+    cardPoster.setAttribute("src", "img/missing_poster.png");
+    let cardTitle = document.createElement("div");
+    cardTitle.classList.add("cardTitle");
+    cardTitle.innerText = errorCard.movie.name;
+    let cardInfo = document.createElement("div");
+    cardInfo.classList.add("cardInfo");
+    cardInfo.classList.add("item-float-left");
+    cardInfo.innerText = errorCard.reason;
+    card.appendChild(cardPoster);
+    card.appendChild(cardTitle);
+    card.appendChild(cardInfo);
+    return card;
+}
+
 // Create a card visualisation of a JSON object
-function createCard(cardData, posterURL){
+function createCard(cardData){
+    if (cardData.type == "error") return createErrorCard(cardData);
+
     // Image on the card
     let cardPoster = document.createElement("img");
     cardPoster.classList.add("cardPoster");
-    cardPoster.setAttribute("alt", "movie cardPoster");
-    cardPoster.setAttribute("src", posterURL + cardData.poster_path);
+    cardPoster.setAttribute("alt", "poster movie");
+    cardPoster.setAttribute("src", cardData.poster_path);
     // Title of the card
     let cardTitle = document.createElement("div");
     cardTitle.classList.add("cardTitle");
@@ -217,7 +253,7 @@ function createCard(cardData, posterURL){
         subCollection.classList.add("responsiveGrid");
         subCollection.setAttribute("id", "sublist_" + cardData.id);
         modalInfo.appendChild(subCollection);
-        refreshMovieCards(cardData, subCollection);
+        refreshMovieCards(cardData, subCollection, sortByReleaseDate);
     }
     // Container of the modal box content
     let modalContent = document.createElement("div");
@@ -260,7 +296,7 @@ function setEventListeners(){
 
 /*window.onload = function(){
     let input = "{\"content\":[\
-        {\"type\": \"movie\",\"name\": \"the matrix\",\"file name\": \"the matrix.mkv\"},\
+        {\"type\": \"movie\",\"name\": \"xmen\",\"file name\": \"the matrix.mkv\"},\
         {\"type\": \"collection\",\"name\":\"james bond\",\"content\":[\
             {\"type\": \"movie\",\"name\": \"skyfall\",\"file name\": \"skyfall.mkv\"}]},\
         {\"type\": \"tvshow\",\"name\": \"witcher\",\"file name\": \"witcher (TV)\",\"content\":[\
@@ -270,6 +306,6 @@ function setEventListeners(){
             {\"type\":\"tvep\",\"name\":\"loki\", \"season\":\"1\", \"episode\":\"1\",\"file name\": \"loki (S01E01)\"}]}\
     ]}";
     // console.log(input);
-    refreshMovieCards(JSON.parse(input), document.getElementById("movieList"));
+    refreshMovieCards(JSON.parse(input), document.getElementById("movieList"), sortByOriginalTitle);
     setEventListeners();
 };*/

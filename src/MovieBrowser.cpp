@@ -1,7 +1,7 @@
 #include "MovieBrowser.h"
 
-#define WINDOW_WIDTH  600
-#define WINDOW_HEIGHT 400
+#define WINDOW_WIDTH  960
+#define WINDOW_HEIGHT 540
 
 MovieBrowser::MovieBrowser() {
   ///
@@ -103,13 +103,13 @@ void MovieBrowser::OnDOMReady(ultralight::View* caller,
   ///
   /// This is the best time to setup any JavaScript bindings.
   ///
-  this->addPath("/media/lucas/BAT-external disk/video/films/");
+  this->addPath("/media/lucas/BAT-external disk/video/films/Spiderman");
   this->addPath("D:\\video\\films");
   this->addPath("/home/lucas/Videos");
   std::string scanData = this->scanPaths();
-  //std::cout << scanData << std::endl;
+  std::cout << scanData << std::endl;
   ultralight::String d = "{\\\"content\\\": [{\\\"type\\\": \\\"file\\\",\\\"name\\\": \\\"Matrix\\\",\\\"file name\\\": \\\"Matrix (1999).mkv\\\"}]}";
-  ultralight::String jsFunc = "refreshMovieCards(JSON.parse(\"" + ultralight::String(scanData.c_str()) + "\"), document.getElementById(\"movieList\"))";
+  ultralight::String jsFunc = "refreshMovieCards(JSON.parse(\"" + ultralight::String(scanData.c_str()) + "\"), document.getElementById(\"movieList\"), sortByOriginalTitle)";
   caller->EvaluateScript(jsFunc);
   
   /*ultralight::String jsFunc = "refreshMovieList(\"";
@@ -180,22 +180,25 @@ std::string MovieBrowser::scanDirectory(std::string dir){
       // filename of the current entry (could be a file or a directory)
       std::string filename = entry.path().filename().string();
       // regex matches on the element's names
-      std::cmatch m;
-      std::regex exp ("((\\w+\\ ?)+)((\\(TV\\))?(\\(S(\\d+)\\))?(\\(S(\\d+)E(\\d+)\\))?(\\ ?\\(\\d+\\))?(\\.\\w+)?)");
+      std::cmatch m; // 1:name 2:type 3:year 6:season 8:episode
+      std::regex exp ("^([^\\(\\.]+)(\\((\\d+)?(TV)?(S(\\d+)(E(\\d+))?)?\\))?(\\.\\w+)?$");
       std::regex_match(filename.c_str(), m, exp);
+
+      //std::cout <<filename<<"\n";
+      //for (int i = 0; i < 15; i++) { std::cout << m[i] << "\t"; }
+      //std::cout << "\n";
+
       // Add the complete filename
       jsonData.append("{\\\"filename\\\":\\\"").append(entry.path().string()).append("\\\",");
       // Add the element's name only (not the series number, etc)
       jsonData.append("\\\"name\\\":\\\"").append(m[1]).append("\\\",");
-
-      std::cout <<filename<<"\n";
-      for (int i = 0; i < 15; i++) { std::cout << m[i] << "\t"; }
-      std::cout << "\n";
-      
+      // Add the year if there is one
+      if (m[2].length() == 6) jsonData.append("\\\"fileYear\\\":\\\"").append(m[3]).append("\\\",");
+      else jsonData.append("\\\"fileYear\\\":\\\"\\\",");
 
       // If the element is a directory
       if (entry.is_directory()) {
-        switch (m[3].length()) {
+        switch (m[2].length()) {
         case 4:
           // it's a TV show
           jsonData.append("\\\"type\\\":\\\"tvshow\\\",");
@@ -211,16 +214,16 @@ std::string MovieBrowser::scanDirectory(std::string dir){
           break;
         }
         // recursively add directory's content
-        //jsonData.append("\\\"content\\\":[").append(scanDirectory(entry.path().string())).append("]},");
-        jsonData.append("\\\"content\\\":[").append("").append("]},");
+        jsonData.append("\\\"content\\\":[").append(scanDirectory(entry.path().string())).append("]},");
+        //jsonData.append("\\\"content\\\":[").append("").append("]},");
       } else { // it is a file
-        // if the match begins with a parenthesis, then it's a TV episode
-        if (m[3].str()[0] == '(') {
+        if (m[2].length() > 6) {
+          // TV episode
           jsonData.append("\\\"type\\\":\\\"tvep\\\",");
-          jsonData.append("\\\"season\\\":\\\"").append(std::to_string(std::stoi(m[8]))).append("\\\",");
-          jsonData.append("\\\"episode\\\":\\\"").append(std::to_string(std::stoi(m[9]))).append("\\\"},");
+          // parse to int then back to string to get the actual number
+          jsonData.append("\\\"season\\\":\\\"").append(std::to_string(std::stoi(m[6]))).append("\\\",");
+          jsonData.append("\\\"episode\\\":\\\"").append(std::to_string(std::stoi(m[8]))).append("\\\"},");
         } else {
-          // else it is a movie
           jsonData.append("\\\"type\\\":\\\"movie\\\"},");
         }
       }

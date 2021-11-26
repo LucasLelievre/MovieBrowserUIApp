@@ -103,20 +103,17 @@ void MovieBrowser::OnDOMReady(ultralight::View* caller,
   ///
   /// This is the best time to setup any JavaScript bindings.
   ///
-  this->addPath("/media/lucas/BAT-external disk/video/films/Spiderman");
-  this->addPath("D:\\video\\films");
+  this->addPath("/media/lucas/BAT-external disk/video/films");
   this->addPath("/home/lucas/Videos");
+  this->addPath("D:\\video\\films");
+  //this->addPath("C:\\Users\\Lucas\\Videos");
   std::string scanData = this->scanPaths();
   std::cout << scanData << std::endl;
-  ultralight::String d = "{\\\"content\\\": [{\\\"type\\\": \\\"file\\\",\\\"name\\\": \\\"Matrix\\\",\\\"file name\\\": \\\"Matrix (1999).mkv\\\"}]}";
+  ultralight::String mockScan = "refreshMovieCards(JSON.parse(\"{\\\"content\\\": [{\\\"type\\\": \\\"movie\\\",\\\"name\\\": \\\"the Matrix\\\",\\\"file name\\\": \\\"Matrix (1999).mkv\\\"}]}\"), document.getElementById(\"movieList\"), sortByOriginalTitle)";
   ultralight::String jsFunc = "refreshMovieCards(JSON.parse(\"" + ultralight::String(scanData.c_str()) + "\"), document.getElementById(\"movieList\"), sortByOriginalTitle)";
-  caller->EvaluateScript(jsFunc);
-  
-  /*ultralight::String jsFunc = "refreshMovieList(\"";
-  jsFunc += ultralight::String(scanData.c_str());
-  jsFunc += "\")";
-  std::cout << jsFunc.utf8().data() << std::endl;*/
-  //caller->EvaluateScript(jsFunc);
+  ultralight::String execp;
+  caller->EvaluateScript(jsFunc, &execp);
+  std::cout << "exception : " << execp.utf8().data() << std::endl;
   caller->EvaluateScript("setEventListeners()");
 }
 
@@ -159,7 +156,9 @@ std::string MovieBrowser::scanPaths(){
   std::string scanData = "{\\\"content\\\":[";
   for(std::string path : paths) {
     // append all the paths scanned data
-    scanData.append(this->scanDirectory(path)).append(",");
+    std::string output = this->scanDirectory(path);
+    if (output.length() > 0) output.append(",");
+    scanData.append(output);
   }
   // remove the last comma, before closing the array
   if (scanData.back() == ',') scanData.pop_back();
@@ -189,7 +188,7 @@ std::string MovieBrowser::scanDirectory(std::string dir){
       //std::cout << "\n";
 
       // Add the complete filename
-      jsonData.append("{\\\"filename\\\":\\\"").append(entry.path().string()).append("\\\",");
+      jsonData.append("{\\\"filename\\\":\\\"").append(std::regex_replace(entry.path().string(), std::regex("\\\\"), "\\\\\\\\")).append("\\\",");
       // Add the element's name only (not the series number, etc)
       jsonData.append("\\\"name\\\":\\\"").append(m[1]).append("\\\",");
       // Add the year if there is one
@@ -228,7 +227,9 @@ std::string MovieBrowser::scanDirectory(std::string dir){
         }
       }
     }
-    if (jsonData.back() == ',') jsonData.pop_back();
+    if (jsonData.length())
+      if (jsonData.back() == ',')
+        jsonData.pop_back();
   } catch(const std::exception& e) {
     // TODO unreadable directory
     std::cerr << e.what() << '\n';

@@ -245,7 +245,8 @@ function createCard(cardData){
         play.setAttribute("id", "movie_file_name");
         play.setAttribute("href", "#");
         play.innerText = "play the " + (cardData.type == "tvep" ? "episode" : "movie");
-        //TODO play button for movies
+        // Callback C++ function that starts the movie in VLC
+        play.addEventListener("click", function (event) { systemCommand("vlc", cardData.filename);});
         modalInfo.appendChild(play);
     } else {
         // Sub list of cards
@@ -288,7 +289,8 @@ function setEventListeners(){
         if (anchor.classList.contains("weblink")) {
             anchor.addEventListener("click", function(event) {
                 console.log(this.attributes["href"].value);
-                //TODO call c++ function to launch webbrowser to url value
+                // Call c++ function to launch webbrowser to url value
+                systemCommand("firefox", this.attributes["href"].value);
             })
         }
     }

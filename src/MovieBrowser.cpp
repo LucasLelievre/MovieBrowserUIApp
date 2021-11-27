@@ -93,7 +93,28 @@ void MovieBrowser::OnFinishLoading(ultralight::View* caller,
   /// This is called when a frame finishes loading on the page.
   ///
 }
-
+JSValueRef systemCommand(JSContextRef ctx, JSObjectRef function, JSObjectRef thisObject, size_t argumentCount, const JSValueRef *arguments, JSValueRef *exception) {
+  // check if argument is really a string
+  if (argumentCount > 1) {
+    if (JSValueIsString(ctx, arguments[0]) && JSValueIsString(ctx, arguments[1])) {
+      // create the system command
+      JSString sProg = JSValueToStringCopy(ctx, arguments[0], exception);
+      JSString sParam = JSValueToStringCopy(ctx, arguments[1], exception);
+      ultralight::String command = ultralight::String(sProg)
+                                  + ultralight::String(" '")
+                                  + ultralight::String(sParam)
+                                  + ultralight::String("'");
+      std::cout << command.utf8().data() << std::endl;
+      // start the movie in VLC
+      system(command.utf8().data());
+    } else {
+      std::cerr << "arguments are incorrect (not strings)" << std::endl;
+    }
+  } else {
+    std::cerr << "no arguments provided" << std::endl;
+  }
+  return JSValueMakeNull(ctx);
+}
 void MovieBrowser::OnDOMReady(ultralight::View* caller,
                        uint64_t frame_id,
                        bool is_main_frame,
@@ -106,15 +127,24 @@ void MovieBrowser::OnDOMReady(ultralight::View* caller,
   this->addPath("/media/lucas/BAT-external disk/video/films");
   this->addPath("/home/lucas/Videos");
   this->addPath("D:\\video\\films");
-  //this->addPath("C:\\Users\\Lucas\\Videos");
+  this->addPath("C:\\Users\\Lucas\\Videos");
   std::string scanData = this->scanPaths();
-  std::cout << scanData << std::endl;
-  ultralight::String mockScan = "refreshMovieCards(JSON.parse(\"{\\\"content\\\": [{\\\"type\\\": \\\"movie\\\",\\\"name\\\": \\\"the Matrix\\\",\\\"file name\\\": \\\"Matrix (1999).mkv\\\"}]}\"), document.getElementById(\"movieList\"), sortByOriginalTitle)";
+  // std::cout << scanData << std::endl;
+  // ultralight::String mockScan = "refreshMovieCards(JSON.parse(\"{\\\"content\\\": [{\\\"type\\\": \\\"movie\\\",\\\"name\\\": \\\"the Matrix\\\",\\\"file name\\\": \\\"Matrix (1999).mkv\\\"}]}\"), document.getElementById(\"movieList\"), sortByOriginalTitle)";
   ultralight::String jsFunc = "refreshMovieCards(JSON.parse(\"" + ultralight::String(scanData.c_str()) + "\"), document.getElementById(\"movieList\"), sortByOriginalTitle)";
   ultralight::String execp;
   caller->EvaluateScript(jsFunc, &execp);
   std::cout << "exception : " << execp.utf8().data() << std::endl;
   caller->EvaluateScript("setEventListeners()");
+
+  // Add callback to the systemCommand function
+  Ref<JSContext> context = caller->LockJSContext();
+  JSContextRef ctx = context.get();
+  JSStringRef funcName = JSStringCreateWithUTF8CString("systemCommand");
+  JSObjectRef funcCallBack = JSObjectMakeFunctionWithCallback(ctx, funcName, systemCommand);
+  JSObjectRef globalObj = JSContextGetGlobalObject(ctx);
+  JSObjectSetProperty(ctx, globalObj, funcName, funcCallBack, 0, 0);
+  JSStringRelease(funcName);
 }
 
 void MovieBrowser::OnChangeCursor(ultralight::View* caller,
@@ -124,8 +154,7 @@ void MovieBrowser::OnChangeCursor(ultralight::View* caller,
   ///
   /// We update the main window's cursor here.
   ///
-  if (cursor == kCursor_Hand) window_->SetCursor(kCursor_Pointer);
-  else window_->SetCursor(cursor);
+  window_->SetCursor(kCursor_Pointer);
 }
 
 void MovieBrowser::OnChangeTitle(ultralight::View* caller,
@@ -213,8 +242,8 @@ std::string MovieBrowser::scanDirectory(std::string dir){
           break;
         }
         // recursively add directory's content
-        jsonData.append("\\\"content\\\":[").append(scanDirectory(entry.path().string())).append("]},");
-        //jsonData.append("\\\"content\\\":[").append("").append("]},");
+        // jsonData.append("\\\"content\\\":[").append(scanDirectory(entry.path().string())).append("]},");
+        jsonData.append("\\\"content\\\":[").append("").append("]},");
       } else { // it is a file
         if (m[2].length() > 6) {
           // TV episode

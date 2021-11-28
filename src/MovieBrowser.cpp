@@ -98,12 +98,11 @@ JSValueRef systemCommand(JSContextRef ctx, JSObjectRef function, JSObjectRef thi
   if (argumentCount > 1) {
     if (JSValueIsString(ctx, arguments[0]) && JSValueIsString(ctx, arguments[1])) {
       // create the system command
-      JSString sProg = JSValueToStringCopy(ctx, arguments[0], exception);
-      JSString sParam = JSValueToStringCopy(ctx, arguments[1], exception);
-      ultralight::String command = ultralight::String(sProg)
+      ultralight::String command = ultralight::String(JSValue(arguments[0]))
                                   + ultralight::String(" '")
-                                  + ultralight::String(sParam)
+                                  + ultralight::String(JSValue(arguments[1]))
                                   + ultralight::String("'");
+                                  // example : "prog 'filepath'"
       std::cout << command.utf8().data() << std::endl;
       // start the movie in VLC
       system(command.utf8().data());

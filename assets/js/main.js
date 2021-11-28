@@ -188,15 +188,28 @@ function createCard(cardData){
     card.setAttribute("id", "card_" + cardData.id);
     card.appendChild(cardPoster);
     card.appendChild(cardTitle);
-    if (cardData.type == "tvseason" || cardData.type == "tvep") {
-        // Season and episode number
-        let cardTVinfo = document.createElement("div");
-        cardTVinfo.classList.add("cardInfo");
-        cardTVinfo.classList.add("item-float-left");
-        cardTVinfo.innerText = "S" + cardData.season;
-        cardTVinfo.innerText += cardData.type == "tvep" ? "E" + cardData.episode : "";
-        card.appendChild(cardTVinfo);
+    // Card type (Collection, tv, season, ep)
+    let cardTVinfo = document.createElement("div");
+    cardTVinfo.classList.add("cardInfo");
+    cardTVinfo.classList.add("item-float-left");
+    switch (cardData.type) {
+        case "tvseason":
+            cardTVinfo.innerText = "S" + cardData.season;
+            break;
+        case "tvep":
+            cardTVinfo.innerText = "S" + cardData.season + "E" + cardData.episode;
+            break;
+        case "tvshow":
+            cardTVinfo.innerText = "TV";
+            break;
+        case "collection":
+            cardTVinfo.innerText = "Collection";
+            break;
+        default:
+            break;
     }
+    card.appendChild(cardTVinfo);
+    // Release Date
     if (cardData.release_date != undefined) {
         // Release data if any
         let cardDate = document.createElement("div");
@@ -259,8 +272,7 @@ function createCard(cardData){
     // Container of the modal box content
     let modalContent = document.createElement("div");
     modalContent.classList.add("modalContent");
-    if (cardData.type == "tvseason") modalContent.classList.add("tvseason");
-    if (cardData.type == "tvep") modalContent.classList.add("tvep");
+    if (cardData.type == "tvep" || cardData.type == "movie") modalContent.classList.add("hasPlayButton");
     modalContent.appendChild(modalPoster);
     modalContent.appendChild(modalInfo);
     // Modal box itself
@@ -296,7 +308,7 @@ function setEventListeners(){
     }
 }
 
-/*window.onload = function(){
+window.onload = function(){
     let input = "{\"content\":[\
         {\"type\": \"movie\",\"name\": \"xmen\",\"file name\": \"the matrix.mkv\"},\
         {\"type\": \"collection\",\"name\":\"james bond\",\"content\":[\
@@ -310,4 +322,4 @@ function setEventListeners(){
     // console.log(input);
     refreshMovieCards(JSON.parse(input), document.getElementById("movieList"), sortByOriginalTitle);
     setEventListeners();
-};*/
+};

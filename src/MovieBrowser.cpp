@@ -1,7 +1,7 @@
 #include "MovieBrowser.h"
 
-#define WINDOW_WIDTH  960
-#define WINDOW_HEIGHT 540
+#define WINDOW_WIDTH  1280
+#define WINDOW_HEIGHT 720
 
 MovieBrowser::MovieBrowser() {
   ///
@@ -14,8 +14,16 @@ MovieBrowser::MovieBrowser() {
   /// kWindowFlags_Resizable.
   ///
   window_ = Window::Create(app_->main_monitor(), WINDOW_WIDTH, WINDOW_HEIGHT,
-    false, kWindowFlags_Titled | kWindowFlags_Resizable);
+    false, kWindowFlags_Resizable | kWindowFlags_Maximizable | kWindowFlags_Titled);
 
+  #ifdef __linux__
+  	
+  #endif
+  #ifdef _WIN32
+    HWND hwnd_ = (HWND) window_.get()->native_handle();
+    ShowWindow(hwnd_, SW_SHOWMAXIMIZED);
+  #endif
+ 
   ///
   /// Create our HTML overlay-- we don't care about its initial size and
   /// position because it'll be calculated when we call OnResize() below.

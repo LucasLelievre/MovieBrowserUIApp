@@ -1,6 +1,9 @@
 #pragma once
 #include <AppCore/AppCore.h>
 
+#ifdef _WIN32
+  #include <Windows.h>
+#endif
 #include <iostream>
 #include <filesystem>
 #include <vector>

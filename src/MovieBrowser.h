@@ -4,6 +4,9 @@
 #ifdef _WIN32
   #include <Windows.h>
 #endif
+#ifdef __linux__
+  #include <GLFW/glfw3.h>
+#endif
 #include <iostream>
 #include <filesystem>
 #include <vector>

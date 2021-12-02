@@ -8,8 +8,12 @@ This project makes use of [TheMovieDB](https://www.themoviedb.org/) to get basic
 
 ## Usage
 
-1 - Install [Prerequisites](https://docs.ultralig.ht/docs/installing-prerequisites) before building.
+### Linux
 
-2 - Run `MovieBrowserUIApp/build.sh` to build project.
+1. Install [Prerequisites](https://docs.ultralig.ht/docs/installing-prerequisites).
 
-3 - Run `MovieBrowserUIApp/build/MovieBrowser` to run the app.
+2. Install GLFW : `sudo apt install libglfw3` and `sudo apt install libglfw3-dev`.
+
+3. Run `MovieBrowserUIApp/build.sh` to build project.
+
+4. Run `MovieBrowserUIApp/build/MovieBrowser` to run the app.

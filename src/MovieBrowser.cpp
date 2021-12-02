@@ -17,10 +17,11 @@ MovieBrowser::MovieBrowser() {
     false, kWindowFlags_Resizable | kWindowFlags_Maximizable | kWindowFlags_Titled);
 
   #ifdef __linux__
-  	
+  	GLFWwindow* win = reinterpret_cast<GLFWwindow*>(window_->native_handle());
+    glfwMaximizeWindow(win);
   #endif
   #ifdef _WIN32
-    HWND hwnd_ = (HWND) window_.get()->native_handle();
+    auto hwnd_ = reinterpretcast<HWND>(window_->native_handle());
     ShowWindow(hwnd_, SW_SHOWMAXIMIZED);
   #endif
  
@@ -140,7 +141,7 @@ void MovieBrowser::OnDOMReady(ultralight::View* caller,
   // ultralight::String mockScan = "refreshMovieCards(JSON.parse(\"{\\\"content\\\": [{\\\"type\\\": \\\"movie\\\",\\\"name\\\": \\\"the Matrix\\\",\\\"file name\\\": \\\"Matrix (1999).mkv\\\"}]}\"), document.getElementById(\"movieList\"), sortByOriginalTitle)";
   ultralight::String jsFunc = "refreshMovieCards(JSON.parse(\"" + ultralight::String(scanData.c_str()) + "\"), document.getElementById(\"movieList\"), sortByOriginalTitle)";
   ultralight::String execp;
-  caller->EvaluateScript(jsFunc, &execp);
+  //caller->EvaluateScript(jsFunc, &execp);
   std::cout << "exception : " << execp.utf8().data() << std::endl;
   caller->EvaluateScript("setEventListeners()");
 

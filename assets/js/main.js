@@ -111,7 +111,8 @@ function getMovieDataFromURL(url, movie) {
 function refreshMovieCards(scannedData, cardListId, sort) {
     let cardList = document.getElementById(cardListId);
     let sortFunc = sort == "title" ? sortByOriginalTitle : sortByReleaseDate;
-    
+
+    console.log(scannedData);
     // empty the list
     cardList.innerHTML = "";
     let promises = [];
@@ -224,6 +225,21 @@ function createCard(cardData){
     // Modal box control
     card.addEventListener("click", function (event) { document.getElementById(this.attributes["id"].value + "_modal").style.display = "block"; });
 
+    // Scan the inside of the directory and add the new cards
+    if (cardData.type == "tvseason" || cardData.type == "collection" || cardData.type == "tvshow") {
+        card.addEventListener("click", function(event) {
+            let sublist = document.getElementById("sublist_"+cardData.id);
+            if (sublist.innerHTML === "") {
+                // TODO call c++ function to scann movies in filepath
+                let sublistContent = JSON.parse("{}");
+                sublistContent.content = cardData.content
+
+                // Get the data online and add the cards
+                refreshMovieCards(sublistContent, "sublist_"+cardData.id, "date");
+            }
+        });
+    }
+
     // Image of the modal box
     let modalPoster = document.createElement("div");
     modalPoster.classList.add("modalPoster");
@@ -270,7 +286,7 @@ function createCard(cardData){
         subCollection.classList.add("responsiveGrid");
         subCollection.setAttribute("id", "sublist_" + cardData.id);
         modalInfo.appendChild(subCollection);
-        refreshMovieCards(cardData, subCollection.getAttribute("id"), "date");
+        // refreshMovieCards(cardData, subCollection.getAttribute("id"), "date");
     }
     // Container of the modal box content
     let modalContent = document.createElement("div");
@@ -311,7 +327,7 @@ function setEventListeners(){
     }
 }
 
-/*window.onload = function(){
+window.onload = function(){
     let input = "{\"content\":[\
         {\"type\": \"movie\",\"name\": \"xmen\",\"file name\": \"the matrix.mkv\"},\
         {\"type\": \"collection\",\"name\":\"james bond\",\"content\":[\
@@ -323,6 +339,6 @@ function setEventListeners(){
             {\"type\":\"tvep\",\"name\":\"loki\", \"season\":\"1\", \"episode\":\"1\",\"file name\": \"loki (S01E01)\"}]}\
     ]}";
     // console.log(input);
-    refreshMovieCards(JSON.parse(input), movieList, "title");
+    refreshMovieCards(JSON.parse(input), "movieList", "title");
     setEventListeners();
-};*/
+};

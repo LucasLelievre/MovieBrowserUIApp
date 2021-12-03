@@ -108,7 +108,10 @@ function getMovieDataFromURL(url, movie) {
 }
 
 // Update the cards from given JSON data
-function refreshMovieCards(scannedData, cardList, sortFunc) {
+function refreshMovieCards(scannedData, cardListId, sort) {
+    let cardList = document.getElementById(cardListId);
+    let sortFunc = sort == "title" ? sortByOriginalTitle : sortByReleaseDate;
+    
     // empty the list
     cardList.innerHTML = "";
     let promises = [];
@@ -267,7 +270,7 @@ function createCard(cardData){
         subCollection.classList.add("responsiveGrid");
         subCollection.setAttribute("id", "sublist_" + cardData.id);
         modalInfo.appendChild(subCollection);
-        refreshMovieCards(cardData, subCollection, sortByReleaseDate);
+        refreshMovieCards(cardData, subCollection.getAttribute("id"), "date");
     }
     // Container of the modal box content
     let modalContent = document.createElement("div");
@@ -308,7 +311,7 @@ function setEventListeners(){
     }
 }
 
-window.onload = function(){
+/*window.onload = function(){
     let input = "{\"content\":[\
         {\"type\": \"movie\",\"name\": \"xmen\",\"file name\": \"the matrix.mkv\"},\
         {\"type\": \"collection\",\"name\":\"james bond\",\"content\":[\
@@ -320,6 +323,6 @@ window.onload = function(){
             {\"type\":\"tvep\",\"name\":\"loki\", \"season\":\"1\", \"episode\":\"1\",\"file name\": \"loki (S01E01)\"}]}\
     ]}";
     // console.log(input);
-    refreshMovieCards(JSON.parse(input), document.getElementById("movieList"), sortByOriginalTitle);
+    refreshMovieCards(JSON.parse(input), movieList, "title");
     setEventListeners();
-};
+};*/

@@ -1,5 +1,6 @@
 #pragma once
 #include <AppCore/AppCore.h>
+#include <JavaScriptCore/JSRetainPtr.h>
 
 #ifdef _WIN32
   #include <Windows.h>
@@ -7,6 +8,7 @@
 #ifdef __linux__
   #include <GLFW/glfw3.h>
 #endif
+
 #include <iostream>
 #include <filesystem>
 #include <vector>
@@ -54,6 +56,10 @@ public:
   virtual void OnChangeTitle(ultralight::View* caller,
     const String& title) override;
 
+  // Get text data from a string type JSValueRef
+  virtual std::string getJSValueRefString(JSContextRef ctx, JSValueRef value);
+  // Evaluate a JS function call
+  virtual bool EvaluateJsFunc(ultralight::View* caller, const char * funcName, int argc, JSValueRef *argv);
   // Add a directory path to the list
   virtual void addPath(std::string path);
   // Scan all the paths

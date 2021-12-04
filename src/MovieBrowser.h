@@ -57,9 +57,7 @@ public:
   // Add a directory path to the list
   virtual void addPath(std::string path);
 
-  // Callback function : run a external program
-  virtual JSValueRef systemCommand(JSContextRef ctx, JSObjectRef function, JSObjectRef thisObject, size_t argumentCount, const JSValueRef *arguments, JSValueRef *exception);
-
+  // Print js console logs
   virtual void OnAddConsoleMessage(View* caller, MessageSource source, MessageLevel level, const String& message, uint32_t line_number, uint32_t column_number, const String& source_id) override;
 
 protected:

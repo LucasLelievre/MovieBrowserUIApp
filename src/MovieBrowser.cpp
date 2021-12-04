@@ -103,42 +103,6 @@ void MovieBrowser::OnFinishLoading(ultralight::View* caller,
   ///
 }
 
-JSValueRef MovieBrowser::systemCommand(JSContextRef ctx, JSObjectRef function, JSObjectRef thisObject, size_t argumentCount, const JSValueRef *arguments, JSValueRef *exception) {
-  // check if argument is really a string
-  if (argumentCount > 1) {
-    if (JSValueIsString(ctx, arguments[0]) && JSValueIsString(ctx, arguments[1])) {
-      // create the system command
-      ultralight::String command = ultralight::String(JSValue(arguments[0]))
-                                  + ultralight::String(" '")
-                                  + ultralight::String(JSValue(arguments[1]))
-                                  + ultralight::String("'");
-                                  // example : "prog 'filepath'"
-      std::cout << command.utf8().data() << std::endl;
-      // execute the command
-      system(command.utf8().data());
-    } else {
-      std::cerr << "arguments are incorrect (not strings)" << std::endl;
-    }
-  } else {
-    std::cerr << "no arguments provided" << std::endl;
-  }
-  return JSValueMakeNull(ctx);
-}
-
-JSValueRef scanSubList(JSContextRef ctx, JSObjectRef function, JSObjectRef thisObject, size_t argumentCount, const JSValueRef *arguments, JSValueRef *exception) {
-  if (argumentCount < 1) {
-    std::cerr << "no folder path provided" << std::endl;
-  }
-  if (!JSValueIsString(ctx, arguments[0])) {
-    std::cerr << "argument is not a string" << std::endl;
-  }
-  JSString argStr = JSValueToStringCopy(ctx,arguments[0], NULL);
-
-  std::cout << ultralight::String(argStr).utf8().data() << std::endl;
-
-  return JSValueMakeBoolean(ctx, true);
-}
-
 void MovieBrowser::OnDOMReady(ultralight::View* caller, uint64_t frame_id, bool is_main_frame, const String& url) {
   /// This is called when a frame's DOM has finished loading on the page.
 
@@ -152,20 +116,16 @@ void MovieBrowser::OnDOMReady(ultralight::View* caller, uint64_t frame_id, bool 
 
   // Scann the paths
   std::string scanData = DirScanner::scanPaths(this->paths);
-  std::cout << scanData << std::endl;
+  // std::cout << scanData << std::endl;
 
-  // Create the js function call
-
+  // Call the JS function to add cards of the sanned data
   // argument 1 : JSON data of scanned files
-  // JSValueRef arg1 = JSValueMakeFromJSONString(ctx, JSStringCreateWithUTF8CString("{\"content\": [{\"type\": \"movie\",\"name\": \"the Matrix\",\"file name\": \"the Matrix (1999).mkv\", \"fileYear\":\"1999\"}]}"));
   JSValueRef arg1 = JSValueMakeFromJSONString(ctx, JSStringCreateWithUTF8CString(scanData.c_str()));
-  // JSValueRef arg1 = JSValueMakeString(ctx, JSStringCreateWithUTF8CString(scanData.c_str()));
   if (JSValueIsNull(ctx, arg1)) std::cout << "json error\n";
   // argument 2 : HTML object that will contain the 
   JSValueRef arg2 = JSValueMakeString(ctx, JSStringCreateWithUTF8CString("movieList"));
   // argument 3 : sorting function
   JSValueRef arg3 = JSValueMakeString(ctx, JSStringCreateWithUTF8CString("title"));
-
   // Call the function
   JSValueRef args[] = {arg1, arg2, arg3};
   this->EvaluateJsFunc(caller, "refreshMovieCards", 3, args);
@@ -179,14 +139,48 @@ void MovieBrowser::OnDOMReady(ultralight::View* caller, uint64_t frame_id, bool 
   // Start a another program with given parameters (ex: vlc movie, firefox url)
   JSObjectRef funcCallBackSysCo = JSObjectMakeFunctionWithCallback(ctx, funcNameSysCo,
     [](JSContextRef ctx, JSObjectRef function, JSObjectRef thisObject, size_t argumentCount, const JSValueRef *arguments, JSValueRef *exception) -> JSValueRef {
-      // TODO call systemCommand function
+      if (argumentCount > 1) {
+        // Check if arguments are strings
+        if (JSValueIsString(ctx, arguments[0]) && JSValueIsString(ctx, arguments[1])) {
+          // create the system command
+          JSString arg0 = JSValueToStringCopy(ctx,arguments[0], NULL);
+          std::string prog = ultralight::String(arg0).utf8().data();
+          JSString arg1 = JSValueToStringCopy(ctx,arguments[1], NULL);
+          std::string arg = ultralight::String(arg1).utf8().data();
+          std::string command = prog + " '" + arg + "'";
+          std::cout << command << std::endl;
+          // execute the command
+          system(command.c_str());
+        } else {
+          std::cerr << "arguments are incorrect (not strings)" << std::endl;
+        }
+      } else {
+        std::cerr << "no arguments provided" << std::endl;
+      }
       return JSValueMakeNull(ctx);
-    });
+  });
+  // Scans a directory
   JSObjectRef funcCallBackScanDir = JSObjectMakeFunctionWithCallback(ctx, funcNameScanDir,
     [](JSContextRef ctx, JSObjectRef function, JSObjectRef thisObject, size_t argumentCount, const JSValueRef *arguments, JSValueRef *exception) -> JSValueRef {
       // TODO scan dirs
+      if (argumentCount > 0) {
+        // Check if arguments are strings
+        if (JSValueIsString(ctx, arguments[0])) {
+          // create the system command
+          JSString arg0 = JSValueToStringCopy(ctx,arguments[0], NULL);
+          std::string path = ultralight::String(arg0).utf8().data();
+          std::string subList = DirScanner::scanPaths({path});
+          // std::cout << subList << std::endl;
+          JSValueRef output = JSValueMakeFromJSONString(ctx, JSStringCreateWithUTF8CString(subList.c_str()));
+          return output;
+        } else {
+          std::cerr << "argument is not a string\n" << std::endl;
+        }
+      } else {
+        std::cerr << "no argument were given\n" << std::endl;
+      }
       return JSValueMakeNull(ctx);
-    });
+  });
   JSObjectRef globalObj = JSContextGetGlobalObject(ctx);
   JSObjectSetProperty(ctx, globalObj, funcNameSysCo, funcCallBackSysCo, 0, 0);
   JSStringRelease(funcNameSysCo);
@@ -215,7 +209,7 @@ void MovieBrowser::OnChangeTitle(ultralight::View* caller,
 }
 
 std::string MovieBrowser::getJSValueRefString(JSContextRef ctx, JSValueRef value) {
-  if (JSValueIsString(ctx, value)) {
+  if (!JSValueIsString(ctx, value)) {
     std::cerr << "value is not string" << std::endl;
     return "";
   }
@@ -256,18 +250,6 @@ bool MovieBrowser::EvaluateJsFunc(ultralight::View* caller, const char * funcNam
     JSObjectRef funcObj = JSValueToObject(ctx, func, 0);
     // Check if 'funcObj' is a Function and not null
     if (funcObj && JSObjectIsFunction(ctx, funcObj)) {
-      // Create our list of arguments
-      // JSValueRef args[argc] = {};
-
-      // for (size_t i = 0; i < argc; i++) {
-        // Create a JS string from null-terminated UTF8 C-string
-        // JSRetainPtr<JSStringRef> msg = adopt(JSStringCreateWithUTF8CString(argv[i]));
-        // args[i] = JSValueMakeString(ctx, msg.get());
-      // }
-
-      // Count the number of arguments in the array.
-      // size_t num_args = sizeof(args) / sizeof(JSValueRef*);
-
       // Create a place to store an exception, if any
       JSValueRef exception = 0;
 

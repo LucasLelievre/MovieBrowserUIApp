@@ -231,10 +231,7 @@ function createCard(cardData){
             let sublist = document.getElementById("sublist_"+cardData.id);
             if (sublist.innerHTML === "") {
                 // TODO call c++ function to scann movies in filepath
-                let sublistContent = JSON.parse("{}");
-                sublistContent.content = cardData.content
-
-                // Get the data online and add the cards
+                let sublistContent = scanDirectory(cardData.filename);
                 refreshMovieCards(sublistContent, "sublist_"+cardData.id, "date");
             }
         });
@@ -325,9 +322,11 @@ function setEventListeners(){
             })
         }
     }
+
+    // TODO settings button
 }
 
-window.onload = function(){
+/*window.onload = function(){
     let input = "{\"content\":[\
         {\"type\": \"movie\",\"name\": \"xmen\",\"file name\": \"the matrix.mkv\"},\
         {\"type\": \"collection\",\"name\":\"james bond\",\"content\":[\
@@ -341,4 +340,4 @@ window.onload = function(){
     // console.log(input);
     refreshMovieCards(JSON.parse(input), "movieList", "title");
     setEventListeners();
-};
+};*/

@@ -14,6 +14,8 @@
 #include <vector>
 #include <regex>
 
+#include "DirScanner.h"
+
 using namespace ultralight;
 
 class MovieBrowser : public AppListener,
@@ -38,23 +40,15 @@ public:
   virtual void OnResize(ultralight::Window* window, uint32_t width, uint32_t height) override;
 
   // This is called when the page finishes a load in one of its frames.
-  virtual void OnFinishLoading(ultralight::View* caller,
-                               uint64_t frame_id,
-                               bool is_main_frame,
-                               const String& url) override;
+  virtual void OnFinishLoading(ultralight::View* caller, uint64_t frame_id, bool is_main_frame, const String& url) override;
 
   // This is called when the DOM has loaded in one of its frames.
-  virtual void OnDOMReady(ultralight::View* caller,
-                          uint64_t frame_id,
-                          bool is_main_frame,
-                          const String& url) override;
+  virtual void OnDOMReady(ultralight::View* caller, uint64_t frame_id, bool is_main_frame, const String& url) override;
 
   // This is called when the page requests to change the Cursor.
-  virtual void OnChangeCursor(ultralight::View* caller,
-    Cursor cursor) override;
+  virtual void OnChangeCursor(ultralight::View* caller, Cursor cursor) override;
 
-  virtual void OnChangeTitle(ultralight::View* caller,
-    const String& title) override;
+  virtual void OnChangeTitle(ultralight::View* caller, const String& title) override;
 
   // Get text data from a string type JSValueRef
   virtual std::string getJSValueRefString(JSContextRef ctx, JSValueRef value);
@@ -62,18 +56,11 @@ public:
   virtual bool EvaluateJsFunc(ultralight::View* caller, const char * funcName, int argc, JSValueRef *argv);
   // Add a directory path to the list
   virtual void addPath(std::string path);
-  // Scan all the paths
-  virtual std::string scanPaths();
-  // Scan a directory and populates the array of files
-  virtual std::string scanDirectory(std::string path);
 
-  virtual void OnAddConsoleMessage(View* caller,
-                                MessageSource source,
-                                MessageLevel level,
-                                const String& message,
-                                uint32_t line_number,
-                                uint32_t column_number,
-                                const String& source_id) override;
+  // Callback function : run a external program
+  virtual JSValueRef systemCommand(JSContextRef ctx, JSObjectRef function, JSObjectRef thisObject, size_t argumentCount, const JSValueRef *arguments, JSValueRef *exception);
+
+  virtual void OnAddConsoleMessage(View* caller, MessageSource source, MessageLevel level, const String& message, uint32_t line_number, uint32_t column_number, const String& source_id) override;
 
 protected:
   RefPtr<App> app_;

@@ -103,7 +103,7 @@ void MovieBrowser::OnFinishLoading(ultralight::View* caller,
   ///
 }
 
-JSValueRef systemCommand(JSContextRef ctx, JSObjectRef function, JSObjectRef thisObject, size_t argumentCount, const JSValueRef *arguments, JSValueRef *exception) {
+JSValueRef MovieBrowser::systemCommand(JSContextRef ctx, JSObjectRef function, JSObjectRef thisObject, size_t argumentCount, const JSValueRef *arguments, JSValueRef *exception) {
   // check if argument is really a string
   if (argumentCount > 1) {
     if (JSValueIsString(ctx, arguments[0]) && JSValueIsString(ctx, arguments[1])) {
@@ -125,6 +125,20 @@ JSValueRef systemCommand(JSContextRef ctx, JSObjectRef function, JSObjectRef thi
   return JSValueMakeNull(ctx);
 }
 
+JSValueRef scanSubList(JSContextRef ctx, JSObjectRef function, JSObjectRef thisObject, size_t argumentCount, const JSValueRef *arguments, JSValueRef *exception) {
+  if (argumentCount < 1) {
+    std::cerr << "no folder path provided" << std::endl;
+  }
+  if (!JSValueIsString(ctx, arguments[0])) {
+    std::cerr << "argument is not a string" << std::endl;
+  }
+  JSString argStr = JSValueToStringCopy(ctx,arguments[0], NULL);
+
+  std::cout << ultralight::String(argStr).utf8().data() << std::endl;
+
+  return JSValueMakeBoolean(ctx, true);
+}
+
 void MovieBrowser::OnDOMReady(ultralight::View* caller, uint64_t frame_id, bool is_main_frame, const String& url) {
   /// This is called when a frame's DOM has finished loading on the page.
 
@@ -137,41 +151,47 @@ void MovieBrowser::OnDOMReady(ultralight::View* caller, uint64_t frame_id, bool 
   this->addPath("C:\\Users\\Lucas\\Videos");
 
   // Scann the paths
-  std::string scanData = this->scanPaths();
+  std::string scanData = DirScanner::scanPaths(this->paths);
   std::cout << scanData << std::endl;
 
   // Create the js function call
 
   // argument 1 : JSON data of scanned files
-  // JSValueRef arg1 = JSValueMakeFromJSONString(ctx, JSStringRef(JSString("{\"content\": [{\"type\": \"movie\",\"name\": \"the Matrix\",\"file name\": \"the Matrix (1999).mkv\", \"fileYear\":\"1999\"}]}")));
-  JSValueRef arg1 = JSValueMakeFromJSONString(ctx, JSStringRef(JSString(scanData.c_str())));
-  // JSValueRef arg1 = JSValueMakeString(ctx, JSStringRef(JSString(scanData.c_str())));
+  // JSValueRef arg1 = JSValueMakeFromJSONString(ctx, JSStringCreateWithUTF8CString("{\"content\": [{\"type\": \"movie\",\"name\": \"the Matrix\",\"file name\": \"the Matrix (1999).mkv\", \"fileYear\":\"1999\"}]}"));
+  JSValueRef arg1 = JSValueMakeFromJSONString(ctx, JSStringCreateWithUTF8CString(scanData.c_str()));
+  // JSValueRef arg1 = JSValueMakeString(ctx, JSStringCreateWithUTF8CString(scanData.c_str()));
   if (JSValueIsNull(ctx, arg1)) std::cout << "json error\n";
   // argument 2 : HTML object that will contain the 
-  JSValueRef arg2 = JSValueMakeString(ctx, JSStringRef(JSString("movieList")));
+  JSValueRef arg2 = JSValueMakeString(ctx, JSStringCreateWithUTF8CString("movieList"));
   // argument 3 : sorting function
-  JSValueRef arg3 = JSValueMakeString(ctx, JSStringRef(JSString("title")));
+  JSValueRef arg3 = JSValueMakeString(ctx, JSStringCreateWithUTF8CString("title"));
 
   // Call the function
   JSValueRef args[] = {arg1, arg2, arg3};
   this->EvaluateJsFunc(caller, "refreshMovieCards", 3, args);
 
-  // ultralight::String mockScan = "refreshMovieCards(JSON.parse(\"{\\\"content\\\": [{\\\"type\\\": \\\"movie\\\",\\\"name\\\": \\\"the Matrix\\\",\\\"file name\\\": \\\"Matrix (1999).mkv\\\"}]}\"), document.getElementById(\"movieList\"), sortByOriginalTitle)";
-  // ultralight::String jsFunc = "refreshMovieCards(JSON.parse(\"" + ultralight::String(scanData.c_str()) + "\"), document.getElementById(\"movieList\"), sortByOriginalTitle)";
-  // ultralight::String scriptExcep;
-  //caller->EvaluateScript(jsFunc, &scriptExcep);
-  // if (!scriptExcep.empty())
-    // std::cerr << "exception : " << scriptExcep.utf8().data() << std::endl;
-
   // Set the global event listeners 
   caller->EvaluateScript("setEventListeners()");
   
-  // Add callback to start another programm from js
-  JSStringRef funcName = JSStringCreateWithUTF8CString("systemCommand");
-  JSObjectRef funcCallBack = JSObjectMakeFunctionWithCallback(ctx, funcName, systemCommand);
+  // Add callback functions
+  JSStringRef funcNameSysCo = JSStringCreateWithUTF8CString("systemCommand");
+  JSStringRef funcNameScanDir = JSStringCreateWithUTF8CString("scanDirectory");
+  // Start a another program with given parameters (ex: vlc movie, firefox url)
+  JSObjectRef funcCallBackSysCo = JSObjectMakeFunctionWithCallback(ctx, funcNameSysCo,
+    [](JSContextRef ctx, JSObjectRef function, JSObjectRef thisObject, size_t argumentCount, const JSValueRef *arguments, JSValueRef *exception) -> JSValueRef {
+      // TODO call systemCommand function
+      return JSValueMakeNull(ctx);
+    });
+  JSObjectRef funcCallBackScanDir = JSObjectMakeFunctionWithCallback(ctx, funcNameScanDir,
+    [](JSContextRef ctx, JSObjectRef function, JSObjectRef thisObject, size_t argumentCount, const JSValueRef *arguments, JSValueRef *exception) -> JSValueRef {
+      // TODO scan dirs
+      return JSValueMakeNull(ctx);
+    });
   JSObjectRef globalObj = JSContextGetGlobalObject(ctx);
-  JSObjectSetProperty(ctx, globalObj, funcName, funcCallBack, 0, 0);
-  JSStringRelease(funcName);
+  JSObjectSetProperty(ctx, globalObj, funcNameSysCo, funcCallBackSysCo, 0, 0);
+  JSStringRelease(funcNameSysCo);
+  JSObjectSetProperty(ctx, globalObj, funcNameScanDir, funcCallBackScanDir, 0, 0);
+  JSStringRelease(funcNameScanDir);
 }
 
 void MovieBrowser::OnChangeCursor(ultralight::View* caller,
@@ -278,98 +298,6 @@ bool MovieBrowser::EvaluateJsFunc(ultralight::View* caller, const char * funcNam
 void MovieBrowser::addPath(std::string newPath) {
   this->paths.push_back(newPath);
 }
-
-/**
- * @brief Scan all the paths for files
- * 
- * @return std::string the JSON data of the scanned files
- */
-std::string MovieBrowser::scanPaths(){
-  std::string scanData = "{\"content\":[";
-  for(std::string path : paths) {
-    // append all the paths scanned data
-    std::string output = this->scanDirectory(path);
-    if (output.length() > 0) output.append(",");
-    scanData.append(output);
-  }
-  // remove the last comma, before closing the array
-  if (scanData.back() == ',') scanData.pop_back();
-  scanData.append("]}");
-  return scanData;
-}
-
-/**
- * @brief iterates through directory recursively to scann all the files in it
- * 
- * @param dir complete string path of the directory
- * @return std::string JSON data of the files scanned
- */
-std::string MovieBrowser::scanDirectory(std::string dir){
-  std::string jsonData = "";
-  try {
-    for (const auto& entry : std::filesystem::directory_iterator(dir)) {
-      // filename of the current entry (could be a file or a directory)
-      std::string filename = entry.path().filename().string();
-      // regex matches on the element's names
-      std::cmatch m; // 1:name 2:type 3:year 6:season 8:episode
-      std::regex exp ("^([^\\(\\.]+)(\\((\\d+)?(TV)?(S(\\d+)(E(\\d+))?)?\\))?(\\.\\w+)?$");
-      std::regex_match(filename.c_str(), m, exp);
-
-      //std::cout <<filename<<"\n";
-      //for (int i = 0; i < 15; i++) { std::cout << m[i] << "\t"; }
-      //std::cout << "\n";
-
-      // Add the complete filename
-      // jsonData.append("{\"filename\":\"").append(std::regex_replace(entry.path().string(), std::regex("\\"), "\\\\")).append("\",");
-      jsonData.append("{\"filename\":\"").append(entry.path().string()).append("\",");
-      // Add the element's name only (not the series number, etc)
-      jsonData.append("\"name\":\"").append(m[1]).append("\",");
-      // Add the year if there is one
-      if (m[2].length() == 6) jsonData.append("\"fileYear\":\"").append(m[3]).append("\",");
-      else jsonData.append("\"fileYear\":\"\",");
-
-      // If the element is a directory
-      if (entry.is_directory()) {
-        switch (m[2].length()) {
-        case 4:
-          // it's a TV show
-          jsonData.append("\"type\":\"tvshow\",");
-          break;
-        case 5:
-          // it's a TV season
-          jsonData.append("\"type\":\"tvseason\",");
-          jsonData.append("\"season\":\"").append(std::to_string(std::stoi(m[6]))).append("\",");
-          break;
-        default:
-          //  it's collection of movies
-          jsonData.append("\"type\":\"collection\",");
-          break;
-        }
-        // recursively add directory's content
-        // jsonData.append("\"content\":[").append(scanDirectory(entry.path().string())).append("]},");
-        jsonData.append("\"content\":[").append("").append("]},");
-      } else { // it is a file
-        if (m[2].length() > 6) {
-          // TV episode
-          jsonData.append("\"type\":\"tvep\",");
-          // parse to int then back to string to get the actual number
-          jsonData.append("\"season\":\"").append(std::to_string(std::stoi(m[6]))).append("\",");
-          jsonData.append("\"episode\":\"").append(std::to_string(std::stoi(m[8]))).append("\"},");
-        } else {
-          jsonData.append("\"type\":\"movie\"},");
-        }
-      }
-    }
-    if (jsonData.length())
-      if (jsonData.back() == ',')
-        jsonData.pop_back();
-  } catch(const std::exception& e) {
-    // TODO unreadable directory
-    std::cerr << e.what() << '\n';
-  }
-  return jsonData;
-}
-
 
 inline std::string ToUTF8(const String& str) {
   String8 utf8 = str.utf8();

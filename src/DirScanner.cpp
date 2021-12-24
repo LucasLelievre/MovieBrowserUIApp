@@ -45,7 +45,11 @@ std::string DirScanner::scanPath(std::string path) {
             std::regex_match(filename.c_str(), m, exp);
 
             // Add the complete filename
-            jsonData.append("{\"filename\":\"").append(entry.path().string()).append("\",");
+            #ifdef _WIN32
+                jsonData.append("{\"filename\":\"").append(std::regex_replace(entry.path().string(), std::regex("\\\\"), "\\\\")).append("\",");
+            #else
+                jsonData.append("{\"filename\":\"").append(entry.path().string()).append("\",");
+            #endif
             // Add the element's name only (not the series number, etc)
             jsonData.append("\"name\":\"").append(m[1]).append("\",");
             // Add the year if there is one

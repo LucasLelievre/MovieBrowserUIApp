@@ -73,8 +73,8 @@ function getMovieDataFromURL(url, movie) {
             return requestAPI(getMovieAPI(movie.type, "", movie.fileYear, movie.id, movie.season, ""))
             .then(function (result) {
                 movie["id"] = result.id;
+                movie["poster_path"] = "https://image.tmdb.org/t/p/w500" + result.poster_path
                 movie["release_date"] = result.air_date;
-                movie["episodes"] = result.episodes;
                 if (result.overview.length > 0) movie["overview"] = result.overview;
                 return movie;
             }).catch(function(reason){
@@ -89,7 +89,6 @@ function getMovieDataFromURL(url, movie) {
                 movie["original_title"] = result.name;
                 movie["poster_path"] = "https://image.tmdb.org/t/p/w500" + result.still_path
                 movie["release_date"] = result.air_date;
-                movie["episodes"] = result.episodes;
                 if (result.overview.length > 0) movie["overview"] = result.overview;
                 return movie;
             }).catch(function(reason){

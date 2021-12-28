@@ -143,14 +143,39 @@ void MovieBrowser::OnDOMReady(ultralight::View* caller, uint64_t frame_id, bool 
         // Check if arguments are strings
         if (JSValueIsString(ctx, arguments[0]) && JSValueIsString(ctx, arguments[1])) {
           // create the system command
+          #ifdef _WIN32
           JSString arg0 = JSValueToStringCopy(ctx,arguments[0], NULL);
           std::string prog = ultralight::String(arg0).utf8().data();
-          JSString arg1 = JSValueToStringCopy(ctx,arguments[1], NULL);
-          std::string arg = ultralight::String(arg1).utf8().data();
-          std::string command = prog + " '" + arg + "'";
-          std::cout << command << std::endl;
-          // execute the command
-          system(command.c_str());
+            if (prog.compare("vlc")==0){
+              prog = "C:\\Program Files\\VideoLAN\\VLC\\vlc.exe";
+            } else {
+              prog = "C:\\Program Files\\Mozilla Firefox\\firefox.exe";
+            }
+
+            JSString commandLineArg = JSValueToStringCopy(ctx,arguments[1], NULL);
+
+            std::string commandLineStr = prog.append(" \"").append(ultralight::String(commandLineArg).utf8().data()).append("\"");
+            
+            
+            std::cout << commandLineStr << std::endl;
+            SubProcessWin::CreateSubProcess(commandLineStr.c_str());
+            std::cout << "ding ding" << std::endl;
+            // SubProcessWin::Close();
+
+          #else
+            // create the system command
+            JSString arg0 = JSValueToStringCopy(ctx,arguments[0], NULL);
+            std::string prog = ultralight::String(arg0).utf8().data();
+
+            JSString arg1 = JSValueToStringCopy(ctx,arguments[1], NULL);
+            std::string arg = ultralight::String(arg1).utf8().data();
+              
+            std::string command = prog + " '" + arg + "'";
+            std::cout << command << std::endl;
+              
+            // execute the command
+            system(command.c_str());
+          #endif
         } else {
           std::cerr << "arguments are incorrect (not strings)" << std::endl;
         }

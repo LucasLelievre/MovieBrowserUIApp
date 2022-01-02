@@ -15,7 +15,7 @@
 #include <regex>
 
 #include "DirScanner.h"
-#include "SubProcessWin.h"
+#include "SubProcess.h"
 
 using namespace ultralight;
 

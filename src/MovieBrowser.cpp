@@ -110,7 +110,7 @@ void MovieBrowser::OnDOMReady(ultralight::View* caller, uint64_t frame_id, bool 
 
   // Add the folder paths that will be scanned
   this->addPath("/media/lucas/BAT-external disk/video/films");
-  // this->addPath("/home/lucas/Videos");
+  this->addPath("/home/lucas/Videos");
   this->addPath("D:\\video\\films");
   this->addPath("C:\\Users\\Lucas\\Videos");
 
@@ -142,40 +142,32 @@ void MovieBrowser::OnDOMReady(ultralight::View* caller, uint64_t frame_id, bool 
       if (argumentCount > 1) {
         // Check if arguments are strings
         if (JSValueIsString(ctx, arguments[0]) && JSValueIsString(ctx, arguments[1])) {
-          // create the system command
+          std::string prog = "";
+          std::string arg = "";
           #ifdef _WIN32
-          JSString arg0 = JSValueToStringCopy(ctx,arguments[0], NULL);
-          std::string prog = ultralight::String(arg0).utf8().data();
-            if (prog.compare("vlc")==0){
-              prog = "C:\\Program Files\\VideoLAN\\VLC\\vlc.exe";
-            } else {
-              prog = "C:\\Program Files\\Mozilla Firefox\\firefox.exe";
-            }
-
-            JSString commandLineArg = JSValueToStringCopy(ctx,arguments[1], NULL);
-
-            std::string commandLineStr = prog.append(" \"").append(ultralight::String(commandLineArg).utf8().data()).append("\"");
-            
-            
-            std::cout << commandLineStr << std::endl;
-            SubProcessWin::CreateSubProcess(commandLineStr.c_str());
-            std::cout << "ding ding" << std::endl;
+            // program path
+            JSString argJS = JSValueToStringCopy(ctx,arguments[0], NULL);
+            prog = ultralight::String(argJS).utf8().data();
+            if (prog.compare("vlc") == 0)   prog = "C:\\Program Files\\VideoLAN\\VLC\\vlc.exe";
+            else                            prog = "C:\\Program Files\\Mozilla Firefox\\firefox.exe";
+            // command line argument
+            argJS = JSValueToStringCopy(ctx, arguments[1], NULL);
+            arg.append("\"").append(ultralight::String(argJS).utf8().data()).append("\"");
+            // std::string commandLineStr = prog.append(" \"").append(ultralight::String(commandLineArg).utf8().data()).append("\"");
+            // std::cout << commandLineStr << std::endl;
+            // SubProcess::CreateSubProcess(commandLineStr.c_str());
+            // SubProcess::CreateSubProcess(prog, arg);
+            // std::cout << "ding ding" << std::endl;
             // SubProcessWin::Close();
-
           #else
-            // create the system command
-            JSString arg0 = JSValueToStringCopy(ctx,arguments[0], NULL);
-            std::string prog = ultralight::String(arg0).utf8().data();
-
-            JSString arg1 = JSValueToStringCopy(ctx,arguments[1], NULL);
-            std::string arg = ultralight::String(arg1).utf8().data();
-              
-            std::string command = prog + " '" + arg + "'";
-            std::cout << command << std::endl;
-              
-            // execute the command
-            system(command.c_str());
+            // program path
+            JSString argJS = JSValueToStringCopy(ctx,arguments[0], NULL);
+            prog = std::string("/usr/bin/").append(ultralight::String(argJS).utf8().data());
+            // command line argument
+            argJS = JSValueToStringCopy(ctx,arguments[1], NULL);
+            arg = ultralight::String(argJS).utf8().data();
           #endif
+          SubProcess::CreateSubProcess(prog, arg);
         } else {
           std::cerr << "arguments are incorrect (not strings)" << std::endl;
         }

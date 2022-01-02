@@ -4,8 +4,8 @@ cmake_minimum_required(VERSION 3.3.2)
 include(cmake/App.cmake)
 
 set(SOURCES
-"src/SubProcessWin.h"
-"src/SubProcessWin.cpp"
+"src/SubProcess.h"
+"src/SubProcess.cpp"
 "src/DirScanner.h"
 "src/DirScanner.cpp"
 "src/MovieBrowser.h"

@@ -10,9 +10,7 @@ SubProcess::~SubProcess() {
 void SubProcess::CreateSubProcess(std::string prog, std::string args) {
     std::cout << prog << ' ' << args << std::endl;
     #ifdef _WIN32
-
-        char* commandLine = new char[strlen(argv)];
-        strcpy(commandLine, argv);
+        std::string commandLine = prog + " " + args;
 
         STARTUPINFO si;
         PROCESS_INFORMATION pi;
@@ -23,7 +21,7 @@ void SubProcess::CreateSubProcess(std::string prog, std::string args) {
 
         // Start the child process. 
         if( !CreateProcess( NULL,   // No module name (use command line)
-            commandLine,           // Command line
+            commandLine.data(),           // Command line
             NULL,           // Process handle not inheritable
             NULL,           // Thread handle not inheritable
             FALSE,          // Set handle inheritance to FALSE

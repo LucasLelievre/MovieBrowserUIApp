@@ -211,6 +211,9 @@ function createCard(cardData){
         default:
             break;
     }
+    if (cardData.quality)
+        cardTVinfo.innerText += '\t'+ cardData.quality;
+
     card.appendChild(cardTVinfo);
     // Release Date
     if (cardData.release_date != undefined) {
@@ -249,6 +252,12 @@ function createCard(cardData){
         modalSeason.classList.add("modalSeason");
         modalSeason.innerText = "S" + cardData.season;
         modalTitle.appendChild(modalSeason);
+    }
+    if (cardData.quality){
+        let modalQuality = document.createElement("div");
+        modalQuality.classList.add("modalSeason");
+        modalQuality.innerText = cardData.quality;
+        modalTitle.appendChild(modalQuality);
     }
 
     // Close modal box Button

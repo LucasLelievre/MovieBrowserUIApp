@@ -8,6 +8,8 @@ set(SOURCES
 "src/SubProcess.cpp"
 "src/DirScanner.h"
 "src/DirScanner.cpp"
+"src/JScallbackFunctions.h"
+"src/JScallbackFunctions.cpp"
 "src/MovieBrowser.h"
 "src/MovieBrowser.cpp"
 "src/main.cpp")

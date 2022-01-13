@@ -14,8 +14,9 @@
 #include <vector>
 #include <regex>
 
-#include "DirScanner.h"
-#include "SubProcess.h"
+#include "JScallbackFunctions.h"
+// #include "DirScanner.h"
+// #include "SubProcess.h"
 
 using namespace ultralight;
 
@@ -58,11 +59,6 @@ public:
   // Add a directory path to the list
   virtual void addPath(std::string path);
 
-  // JS callback functions
-  // Scan a directory
-  JSObjectRef scanDirFunc(JSContextRef ctx, JSStringRef funcName);
-  // launch vlc or firefox
-  JSObjectRef startProg(JSContextRef ctx, JSStringRef funcName);
 
   // Print js console logs
   virtual void OnAddConsoleMessage(View* caller, MessageSource source, MessageLevel level, const String& message, uint32_t line_number, uint32_t column_number, const String& source_id) override;
@@ -73,4 +69,6 @@ protected:
   RefPtr<Overlay> overlay_;
 
   std::vector<std::string> paths;
+  // JS callback functions
+  JScallbackFunctions callbbackFunctions;
 };

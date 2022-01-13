@@ -331,7 +331,13 @@ function setEventListeners(){
         }
     }
 
-    // TODO settings button
+    document.getElementById("settings").addEventListener("click", function(event) {
+        document.getElementById("settings_modal").style.display = "block";
+    });
+    document.getElementById("settingsSave").addEventListener("click", function(event) {
+        document.getElementById("settings_modal").style.display = "none";
+        // saveSettings("pouetpouetBonjour");
+    });
 }
 
 /*window.onload = function(){

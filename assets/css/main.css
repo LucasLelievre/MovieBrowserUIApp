@@ -48,12 +48,11 @@ a:hover {
     color: white;
     font-family: Ubuntu-Bold;
 }
-#settings{
-    color: white;
-    font-size: 2em;
-    padding: 0.3em;
+.svgButton{
+    width: 3em;
+    height: 3em;
 }
-#settings:hover{
+.svgButton:hover{
     color: purple;
     text-shadow: 0px 0px 5px white;
 }

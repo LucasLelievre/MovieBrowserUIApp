@@ -283,7 +283,7 @@ function createCard(cardData){
         play.setAttribute("href", "#");
         play.innerText = "play the " + (cardData.type == "tvep" ? "episode" : "movie");
         // Callback C++ function that starts the movie in VLC
-        play.addEventListener("click", function (event) { systemCommand("vlc", cardData.filename);});
+        play.addEventListener("click", function (event) { startExternalProgram("vlc", cardData.filename);});
         modalInfo.appendChild(play);
     } else {
         // Sub list of cards
@@ -311,12 +311,21 @@ function createCard(cardData){
     return output;
 }
 
+// Callback the directory scan function
+function scanMoviesList() {
+    let refreshedData = scanDirectory("C:\\Users\\Lucas\\Videos", "D:\\video\\films", "/home/lucas/Videos", "/media/lucas/BAT-external disk/video/films");
+    document.getElementById("movieList").innerHTML = "";
+    refreshMovieCards(refreshedData, "movieList", "title");
+}
+
 // Set the event listeners
 function setEventListeners(){
+    // Close the openned modal window
     window.addEventListener("click", function(event){
         if(event.target.classList.contains("modalBox")) event.target.style.display = "none";
     });
 
+    // prevent the default events on link texts
     var anchors = document.getElementsByTagName("a");
     for (let anchor of anchors) {
         anchor.addEventListener("click", function(event){
@@ -325,19 +334,30 @@ function setEventListeners(){
         if (anchor.classList.contains("weblink")) {
             anchor.addEventListener("click", function(event) {
                 console.log(this.attributes["href"].value);
-                // Call c++ function to launch webbrowser to url value
-                systemCommand("firefox", this.attributes["href"].value);
+                // Call c++ callback function to launch webbrowser to url value
+                startExternalProgram("firefox", this.attributes["href"].value);
             })
         }
     }
 
+    // Refresh button to refresh the movie list
+    document.getElementById("refresh").addEventListener("click", function(event) {
+        scanMoviesList();
+    });
+    // Open the settings modal window
     document.getElementById("settings").addEventListener("click", function(event) {
         document.getElementById("settings_modal").style.display = "block";
     });
+    // Save and apply the settings
     document.getElementById("settingsSave").addEventListener("click", function(event) {
         document.getElementById("settings_modal").style.display = "none";
-        // saveSettings("pouetpouetBonjour");
+        settingCallback("pouetpouetBonjour");
     });
+}
+
+function initialize(){
+    setEventListeners();
+    scanMoviesList();
 }
 
 /*window.onload = function(){

@@ -96,7 +96,7 @@ std::string DirScanner::scanPath(std::string path) {
             if (jsonData.back() == ',') jsonData.pop_back();
         }
     } catch(const std::exception& e) {
-        // TODO unreadable directory
+        // Unreadable directory
         std::cerr << e.what() << '\n';
     }
     // std::cout << jsonData << std::endl;

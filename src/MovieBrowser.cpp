@@ -107,35 +107,10 @@ void MovieBrowser::OnDOMReady(ultralight::View* caller, uint64_t frame_id, bool 
   /// This is called when a frame's DOM has finished loading on the page.
 
   JSContextRef ctx = caller->LockJSContext().get();
-
-  // Add the folder paths that will be scanned
-  this->addPath("/media/lucas/BAT-external disk/video/films");
-  this->addPath("/home/lucas/Videos");
-  this->addPath("D:\\video\\films");
-  this->addPath("C:\\Users\\Lucas\\Videos");
-
-  // Scann the paths
-  std::string scanData = DirScanner::scanPaths(this->paths);
-  // std::cout << scanData << std::endl;
-
-  // Call the JS function to add cards of the sanned data
-  // argument 1 : JSON data of scanned files
-  JSValueRef arg1 = JSValueMakeFromJSONString(ctx, JSStringCreateWithUTF8CString(scanData.c_str()));
-  if (JSValueIsNull(ctx, arg1)) std::cout << "json error\n";
-  // argument 2 : HTML object that will contain the 
-  JSValueRef arg2 = JSValueMakeString(ctx, JSStringCreateWithUTF8CString("movieList"));
-  // argument 3 : sorting function
-  JSValueRef arg3 = JSValueMakeString(ctx, JSStringCreateWithUTF8CString("title"));
-  // Call the function
-  JSValueRef args[] = {arg1, arg2, arg3};
-  this->EvaluateJsFunc(caller, "refreshMovieCards", 3, args);
-
-  // Set the global event listeners 
-  caller->EvaluateScript("setEventListeners()");
   
   // Add callback functions
   // play a movie/load github page
-  JSStringRef funcNameSysCo = JSStringCreateWithUTF8CString("systemCommand");
+  JSStringRef funcNameSysCo = JSStringCreateWithUTF8CString("startExternalProgram");
   JSObjectRef globalObj = JSContextGetGlobalObject(ctx);
   JSObjectSetProperty(ctx, globalObj, funcNameSysCo, this->callbbackFunctions.startProg(ctx, funcNameSysCo), 0, 0);
   JSStringRelease(funcNameSysCo);
@@ -143,6 +118,10 @@ void MovieBrowser::OnDOMReady(ultralight::View* caller, uint64_t frame_id, bool 
   JSStringRef funcNameScanDir = JSStringCreateWithUTF8CString("scanDirectory");
   JSObjectSetProperty(ctx, globalObj, funcNameScanDir, this->callbbackFunctions.scanDirFunc(ctx, funcNameScanDir), 0, 0);
   JSStringRelease(funcNameScanDir);
+
+  // Set the event listeners and scan the files
+  caller->EvaluateScript("initialize()");
+
 }
 
 void MovieBrowser::OnChangeCursor(ultralight::View* caller,
@@ -164,80 +143,6 @@ void MovieBrowser::OnChangeTitle(ultralight::View* caller,
   ///
   window_->SetTitle(title.utf8().data());
 }
-
-std::string MovieBrowser::getJSValueRefString(JSContextRef ctx, JSValueRef value) {
-  if (!JSValueIsString(ctx, value)) {
-    std::cerr << "value is not string" << std::endl;
-    return "";
-  }
-  JSValueRef * ex = 0;
-  JSStringRef exceptionStr = JSValueToStringCopy(ctx, value, ex);
-  if (ex) {
-    std::cerr << "error reading value" << std::endl;
-    return "";
-  } else {
-    return ultralight::String(JSString(exceptionStr)).utf8().data();
-  }
-}
-
-/**
- * @brief Calls a JS function
- * 
- * @param caller js context view
- * @param funcName name of the function to call
- * @param argc number of parameters
- * @param argv array of parameters
- * @return true script was executed without errors
- * @return false script failed
- */
-bool MovieBrowser::EvaluateJsFunc(ultralight::View* caller, const char * funcName, int argc, JSValueRef * argv) {
-  // Acquire the JS execution context for the current page.
-  Ref<JSContext> context = caller->LockJSContext();
-  // Get the underlying JSContextRef for use with the JavaScriptCore C API.
-  JSContextRef ctx = context.get();
-  
-  // Create our string of JavaScript, automatically managed by JSRetainPtr
-  JSRetainPtr<JSStringRef> str = adopt(JSStringCreateWithUTF8CString(funcName));
-    // Evaluate the function name
-  JSValueRef func = JSEvaluateScript(ctx, str.get(), 0, 0, 0, 0);
-
-  // Check if 'func' is actually an Object and not null
-  if (JSValueIsObject(ctx, func)) {
-    // Cast 'func' to an Object, will return null if typecast failed.
-    JSObjectRef funcObj = JSValueToObject(ctx, func, 0);
-    // Check if 'funcObj' is a Function and not null
-    if (funcObj && JSObjectIsFunction(ctx, funcObj)) {
-      // Create a place to store an exception, if any
-      JSValueRef exception = 0;
-
-      // Call the ShowMessage() function with our list of arguments.
-      JSValueRef result = JSObjectCallAsFunction(ctx, funcObj, 0, 
-                                                 argc, argv, 
-                                                 &exception);
-
-      if (exception) {
-        std::cerr << "exception : " << this->getJSValueRefString(ctx, exception) << std::endl;
-        return false;
-      }
-      
-      if (result) {
-        std::cout << "result : " << this->getJSValueRefString(ctx, result) << std::endl;
-      }
-      return true;
-    }
-  }
-  return false;
-}
-
-/**
- * @brief Add a path to the list for scanning
- * 
- * @param newPath a complete string path
- */
-void MovieBrowser::addPath(std::string newPath) {
-  this->paths.push_back(newPath);
-}
-
 
 inline std::string ToUTF8(const String& str) {
   String8 utf8 = str.utf8();

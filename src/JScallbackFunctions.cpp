@@ -17,11 +17,16 @@ JSObjectRef JScallbackFunctions::scanDirFunc(JSContextRef ctx, JSStringRef funcN
       if (argumentCount > 0) {
         // Check if arguments are strings
         if (JSValueIsString(ctx, arguments[0])) {
-          // create the system command
-          ultralight::JSString arg0 = JSValueToStringCopy(ctx,arguments[0], NULL);
-          std::string path = ultralight::String(arg0).utf8().data();
-          std::string subList = DirScanner::scanPaths({path});
-          // std::cout << subList << std::endl;
+          ultralight::JSString pathArg;
+          std::vector<std::string> paths;
+          // Read the paths arguments
+          for (size_t i = 0; i < argumentCount; i++) {
+            pathArg = JSValueToStringCopy(ctx, arguments[i], NULL);
+            paths.push_back(ultralight::String(pathArg).utf8().data());
+            std::cout << paths.back() << std::endl;
+          }
+
+          std::string subList = DirScanner::scanPaths(paths);
           JSValueRef output = JSValueMakeFromJSONString(ctx, JSStringCreateWithUTF8CString(subList.c_str()));
           return output;
         } else {

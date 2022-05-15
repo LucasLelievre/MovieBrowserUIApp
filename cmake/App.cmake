@@ -63,7 +63,13 @@ MACRO(ADD_APP source_list)
     SET(CMAKE_INSTALL_RPATH "@executable_path/")
   endif ()
 
-  add_executable(${APP_NAME} WIN32 MACOSX_BUNDLE ${source_list})
+  set(sources "${source_list}")
+  # Set the executable's icon
+  if (PORT MATCHES "UltralightWin")
+    set(sources "${source_list}" "assets/img/appicon.rc")
+  endif()
+
+  add_executable(${APP_NAME} WIN32 MACOSX_BUNDLE ${sources})
 
   if (APPLE)
     # Enable High-DPI on macOS through our custom Info.plist template

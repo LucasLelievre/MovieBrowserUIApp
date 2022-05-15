@@ -17,3 +17,7 @@ This project makes use of [TheMovieDB](https://www.themoviedb.org/) to get basic
 3. Run `MovieBrowserUIApp/build.sh` to build project.
 
 4. Run `MovieBrowserUIApp/build/MovieBrowser` to run the app.
+
+## TODO
+- test read/write settings in linux
+- test xdg-open in linux

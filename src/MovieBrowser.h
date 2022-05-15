@@ -12,11 +12,11 @@
 #include <iostream>
 #include <filesystem>
 #include <vector>
+#include <string>
 #include <regex>
 
 #include "JScallbackFunctions.h"
-// #include "DirScanner.h"
-// #include "SubProcess.h"
+#include "JsonControler.h"
 
 using namespace ultralight;
 
@@ -52,6 +52,10 @@ public:
 
   virtual void OnChangeTitle(ultralight::View* caller, const String& title) override;
 
+  std::string ReadSettings();
+  std::string getJSValueRefString(JSContextRef ctx, JSValueRef value);
+  bool EvaluateJsFunc(ultralight::View* caller, const char * funcName, int argc, JSValueRef * argv);
+
   // Print js console logs
   virtual void OnAddConsoleMessage(View* caller, MessageSource source, MessageLevel level, const String& message, uint32_t line_number, uint32_t column_number, const String& source_id) override;
 
@@ -60,7 +64,9 @@ protected:
   RefPtr<Window> window_;
   RefPtr<Overlay> overlay_;
 
-  std::vector<std::string> paths;
+  // User settings
+  std::string settingsJson;
+
   // JS callback functions
   JScallbackFunctions callbbackFunctions;
 };

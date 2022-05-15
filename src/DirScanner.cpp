@@ -1,12 +1,8 @@
 #include "DirScanner.h"
 
-DirScanner::DirScanner(/* args */)
-{
-}
+DirScanner::DirScanner() {}
 
-DirScanner::~DirScanner()
-{
-}
+DirScanner::~DirScanner() {}
 
 /**
  * @brief Scan the content in all the given paths
@@ -15,17 +11,13 @@ DirScanner::~DirScanner()
  * @return std::string JSON data of all the scanned content
  */
 std::string DirScanner::scanPaths(std::vector<std::string> paths) {
-    std::string scanData = "{\"content\":[";
-    for(std::string path : paths) {
-        // append all the paths scanned data
-        std::string output = DirScanner::scanPath(path);
-        if (output.length() > 0) output.append(",");
-        scanData.append(output);
+    std::vector<std::string> paths_scanned;
+    for (std::string path : paths) {
+        std::vector<std::string> content = DirScanner::scanPath(path);
+        paths_scanned.insert(paths_scanned.end(), content.begin(), content.end());
     }
-    // remove the last comma, before closing the array
-    if (scanData.back() == ',') scanData.pop_back();
-    scanData.append("]}");
-    return scanData;
+    std::string pro = JsonControler::makeProperty("content", JsonControler::makeArray(paths_scanned));
+    return JsonControler::makeObject(std::vector<std::string>{pro});
 }
 /**
  * @brief iterates through directory recursively to scan all the files in it
@@ -33,72 +25,66 @@ std::string DirScanner::scanPaths(std::vector<std::string> paths) {
  * @param path complete string path of the directory
  * @return std::string JSON data of the files scanned
  */
-std::string DirScanner::scanPath(std::string path) {
-    std::string jsonData = "";
+std::vector<std::string> DirScanner::scanPath(std::string path) {
+    // std::string jsonData = "";
+    std::vector<std::string> files;
     try {
         for (const auto& entry : std::filesystem::directory_iterator(path)) {
+            std::vector<std::string> properties;
+
             // filename of the current entry (could be a file or a directory)
             std::string filename = entry.path().filename().string();
+
             // regex matches on the element's names
             std::cmatch m; // 1:name 3:quality 4:type 5:year 8:season 10:episode
             std::regex exp ("^([^\\(\\.]+)(\\ \\((imax|fullhd|4k)\\))?(\\ \\((\\d+)?(TV)?(S(\\d+)(E(\\d+))?)?\\))?(\\.\\w+)?$");
             std::regex_match(filename.c_str(), m, exp);
 
-            // for (size_t i = 0; i < m.length(); i++)
-            //     std::cout << i << ": " << m[i] << "\t";
-            // std::cout << '\n';
-
-            // Add the complete filename
+            // Add the complete filename and path
             #ifdef _WIN32
-                jsonData.append("{\"filename\":\"").append(std::regex_replace(entry.path().string(), std::regex("\\\\"), "\\\\")).append("\",");
+                properties.push_back(JsonControler::makeProperty("filename", std::regex_replace(entry.path().string(), std::regex("\\\\"), "\\\\")));
             #else
-                jsonData.append("{\"filename\":\"").append(entry.path().string()).append("\",");
+                properties.push_back(JsonControler::makeProperty("filename", entry.path().string());
             #endif
+
             // Add the element's name only (not the series number, etc)
-            jsonData.append("\"name\":\"").append(m[1]).append("\",");
+            properties.push_back(JsonControler::makeProperty("name", m[1]));
             // Add the year if there is one
-            if (m[4].length() == 7) jsonData.append("\"fileYear\":\"").append(m[5]).append("\",");
-            else jsonData.append("\"fileYear\":\"\",");
+            if (m[4].length() == 7) properties.push_back(JsonControler::makeProperty("fileYear", m[5]));
+            else properties.push_back(JsonControler::makeProperty("fileYear", ""));
 
             // If the element is a directory
             if (entry.is_directory()) {
                 switch (m[4].length()) {
                     case 5: // it's a TV show " (TV)"
-                        jsonData.append("\"type\":\"tvshow\"");
+                        properties.push_back(JsonControler::makeProperty("type", "tvshow"));
                         break;
                     case 6: // it's a TV season " (S01)"
-                        jsonData.append("\"type\":\"tvseason\",");
-                        jsonData.append("\"season\":\"").append(std::to_string(std::stoi(m[8]))).append("\"");
+                        properties.push_back(JsonControler::makeProperty("type", "tvseason"));
+                        properties.push_back(JsonControler::makeProperty("season", std::to_string(std::stoi(m[8]))));
                         break;
                     default: //  it's collection of movies
-                        jsonData.append("\"type\":\"collection\"");
+                        properties.push_back(JsonControler::makeProperty("type", "collection"));
                         break;
                 }
-                // recursively add directory's content
-                // jsonData.append("\"content\":[").append(scanDirectory(entry.path().string())).append("]");
             } else { // it is a file
                 if (m[3].length())
-                    jsonData.append("\"quality\":\"").append(m[3]).append("\",");
-                // if m[3] is longer than " (xxxx)" then it can only be a tv episode " (SxxExx)"
+                    properties.push_back(JsonControler::makeProperty("quality", m[3]));
                 if (m[4].length() > 7) {
                     // TV episode
-                    jsonData.append("\"type\":\"tvep\",");
+                    properties.push_back(JsonControler::makeProperty("type", "tvep"));
                     // parse to int then back to string to get the actual number (01 to 1)
-                    jsonData.append("\"season\":\"").append(std::to_string(std::stoi(m[8]))).append("\",");
-                    jsonData.append("\"episode\":\"").append(std::to_string(std::stoi(m[10]))).append("\"");
+                    properties.push_back(JsonControler::makeProperty("season", std::to_string(std::stoi(m[8]))));
+                    properties.push_back(JsonControler::makeProperty("episode", std::to_string(std::stoi(m[10]))));
                 } else {
-                    jsonData.append("\"type\":\"movie\"");
+                    properties.push_back(JsonControler::makeProperty("type", "movie"));
                 }
             }
-            jsonData.append("},");
-        }
-        if (jsonData.length()) {
-            if (jsonData.back() == ',') jsonData.pop_back();
+            files.push_back(JsonControler::makeObject(properties));
         }
     } catch(const std::exception& e) {
         // Unreadable directory
         std::cerr << e.what() << '\n';
     }
-    // std::cout << jsonData << std::endl;
-    return jsonData;
+    return files;
 }

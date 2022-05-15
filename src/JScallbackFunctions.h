@@ -2,8 +2,12 @@
 
 #include <AppCore/AppCore.h>
 
+#ifdef _WIN32
+    #include <windows.h>
+#endif
+
 #include "DirScanner.h"
-#include "SubProcess.h"
+#include "JsonControler.h"
 
 class JScallbackFunctions {
 private:
@@ -12,6 +16,7 @@ public:
     JScallbackFunctions(/* args */);
     ~JScallbackFunctions();
 
-    JSObjectRef scanDirFunc(JSContextRef ctx, JSStringRef funcName);
-    JSObjectRef startProg(JSContextRef ctx, JSStringRef funcName);
+    JSObjectRef scanDirectory(JSContextRef ctx, JSStringRef funcName);
+    JSObjectRef openFile(JSContextRef ctx, JSStringRef funcName);
+    JSObjectRef saveSettings(JSContextRef ctx, JSStringRef funcName);
 };

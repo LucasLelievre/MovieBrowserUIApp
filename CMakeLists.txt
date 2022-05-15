@@ -4,8 +4,8 @@ cmake_minimum_required(VERSION 3.3.2)
 include(cmake/App.cmake)
 
 set(SOURCES
-"src/SubProcess.h"
-"src/SubProcess.cpp"
+"src/JsonControler.h"
+"src/JsonControler.cpp"
 "src/DirScanner.h"
 "src/DirScanner.cpp"
 "src/JScallbackFunctions.h"

@@ -111,7 +111,7 @@ function refreshMovieCards(scannedData, cardListId, sort) {
     let cardList = document.getElementById(cardListId);
     let sortFunc = sort == "title" ? sortByOriginalTitle : sortByReleaseDate;
 
-    console.log(scannedData);
+    console.log(JSON.stringify(scannedData));
     // empty the list
     cardList.innerHTML = "";
     let promises = [];
@@ -232,8 +232,7 @@ function createCard(cardData){
         card.addEventListener("click", function(event) {
             let sublist = document.getElementById("sublist_"+cardData.id);
             if (sublist.innerHTML === "") {
-                // TODO call c++ function to scann movies in filepath
-                let sublistContent = scanDirectory(cardData.filename);
+                let sublistContent = scanDirectory([cardData.filename]);
                 refreshMovieCards(sublistContent, "sublist_"+cardData.id, "date");
             }
         });
@@ -283,7 +282,7 @@ function createCard(cardData){
         play.setAttribute("href", "#");
         play.innerText = "play the " + (cardData.type == "tvep" ? "episode" : "movie");
         // Callback C++ function that starts the movie in VLC
-        play.addEventListener("click", function (event) { startExternalProgram("vlc", cardData.filename);});
+        play.addEventListener("click", function (event) { openFile(cardData.filename);});
         modalInfo.appendChild(play);
     } else {
         // Sub list of cards
@@ -313,7 +312,10 @@ function createCard(cardData){
 
 // Callback the directory scan function
 function scanMoviesList() {
-    let refreshedData = scanDirectory("C:\\Users\\Lucas\\Videos", "D:\\video\\films", "/home/lucas/Videos", "/media/lucas/BAT-external disk/video/films");
+    var paths = getSettings();
+    let refreshedData = scanDirectory(paths);
+    console.log("refreshed data after scan")
+    console.log(JSON.stringify(refreshedData));
     document.getElementById("movieList").innerHTML = "";
     refreshMovieCards(refreshedData, "movieList", "title");
 }
@@ -335,7 +337,7 @@ function setEventListeners(){
             anchor.addEventListener("click", function(event) {
                 console.log(this.attributes["href"].value);
                 // Call c++ callback function to launch webbrowser to url value
-                startExternalProgram("firefox", this.attributes["href"].value);
+                openFile(this.attributes["href"].value);
             })
         }
     }
@@ -351,27 +353,67 @@ function setEventListeners(){
     // Save and apply the settings
     document.getElementById("settingsSave").addEventListener("click", function(event) {
         document.getElementById("settings_modal").style.display = "none";
-        settingCallback("pouetpouetBonjour");
+        // let json = {"paths":};
+        // console.log(json);
+        saveSettings(JSON.stringify(getSettings()));
+        scanMoviesList();
+    });
+    // Add path in settings
+    document.getElementById("pathAdd").addEventListener("click", function(event){
+        let i = addSettingsInput("");
+        document.getElementById("path_"+i).focus();
     });
 }
 
-function initialize(){
+function getSettings() {
+    console.log("get the settings from js");
+    let paths = document.getElementsByClassName("inputPath");
+    let arr = [];
+    for (path of paths) {
+        arr.push(path.value);
+    }
+    return arr;
+}
+
+function setSettings(settings) {
+    console.log("settings the settings in JS");
+    console.log(JSON.stringify(settings));
+    let divPaths = document.getElementById("dirPaths");
+    divPaths.innerHTML = "";
+
+    for (let i = 0; i < settings["paths"].length; i++) {
+        const path = settings["paths"][i];
+        addSettingsInput(path);
+    }
+}
+
+function addSettingsInput(path) {
+    let pathDiv = document.getElementById("dirPaths");
+    let i = pathDiv.childElementCount/3;
+
+    let del = document.createElement('a');
+    del.href = "#";
+    del.classList.add("pathDel");
+    del.id = "pathDel_"+i;
+    del.innerHTML = "<svg width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M21.5 6a1 1 0 0 1-.883.993L20.5 7h-.845l-1.231 12.52A2.75 2.75 0 0 1 15.687 22H8.313a2.75 2.75 0 0 1-2.737-2.48L4.345 7H3.5a1 1 0 0 1 0-2h5a3.5 3.5 0 1 1 7 0h5a1 1 0 0 1 1 1Zm-7.25 3.25a.75.75 0 0 0-.743.648L13.5 10v7l.007.102a.75.75 0 0 0 1.486 0L15 17v-7l-.007-.102a.75.75 0 0 0-.743-.648Zm-4.5 0a.75.75 0 0 0-.743.648L9 10v7l.007.102a.75.75 0 0 0 1.486 0L10.5 17v-7l-.007-.102a.75.75 0 0 0-.743-.648ZM12 3.5A1.5 1.5 0 0 0 10.5 5h3A1.5 1.5 0 0 0 12 3.5Z\" fill=\"#000000\"/></svg>";
+    del.addEventListener("click", function(event) {
+        document.getElementById("path_"+i).remove();
+        document.getElementById("pathDel_"+i).remove();
+        document.getElementById("pathBr_"+i).remove();
+    });
+    pathDiv.insertAdjacentHTML("beforeend", "<input class=\"inputPath\" value=\""+path+"\" type=\"text\" id=\"path_"+i+"\">");
+    pathDiv.insertAdjacentElement("beforeend", del);
+    pathDiv.insertAdjacentHTML("beforeend", "<br id=\"pathBr_"+i+"\">")
+    return i;
+}
+
+function initialize(settings){
+    setSettings(settings);
     setEventListeners();
     scanMoviesList();
 }
 
-/*window.onload = function(){
-    let input = "{\"content\":[\
-        {\"type\": \"movie\",\"name\": \"xmen\",\"file name\": \"the matrix.mkv\"},\
-        {\"type\": \"collection\",\"name\":\"james bond\",\"content\":[\
-            {\"type\": \"movie\",\"name\": \"skyfall\",\"file name\": \"skyfall.mkv\"}]},\
-        {\"type\": \"tvshow\",\"name\": \"witcher\",\"file name\": \"witcher (TV)\",\"content\":[\
-            {\"type\": \"tvseason\",\"name\": \"the witcher\", \"season\":\"1\",\"file name\": \"the witcher (S01)\",\"content\":[\
-                {\"type\":\"tvep\",\"name\":\"the witcher\", \"season\":\"1\", \"episode\":\"1\",\"file name\": \"the witcher (S01E01)\"}]}]},\
-        {\"type\": \"tvseason\",\"name\": \"loki\", \"season\":\"1\",\"file name\": \"loki (S01)\",\"content\":[\
-            {\"type\":\"tvep\",\"name\":\"loki\", \"season\":\"1\", \"episode\":\"1\",\"file name\": \"loki (S01E01)\"}]}\
-    ]}";
-    // console.log(input);
-    refreshMovieCards(JSON.parse(input), "movieList", "title");
-    setEventListeners();
-};*/
+window.onload = function(){
+    let settings = "{\"paths\":[\"K:\\\\Videos\"]}";
+    // initialize(JSON.parse(settings));
+};

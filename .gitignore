@@ -3,3 +3,6 @@
 build_*/
 .DS_Store
 .vscode
+
+# Ignore any change in the user settings file
+assets/settings/settings.json

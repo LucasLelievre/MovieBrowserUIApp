@@ -44,7 +44,7 @@ std::vector<std::string> DirScanner::scanPath(std::string path) {
             #ifdef _WIN32
                 properties.push_back(JsonControler::makeProperty("filename", std::regex_replace(entry.path().string(), std::regex("\\\\"), "\\\\")));
             #else
-                properties.push_back(JsonControler::makeProperty("filename", entry.path().string());
+                properties.push_back(JsonControler::makeProperty("filename", entry.path().string()));
             #endif
 
             // Add the element's name only (not the series number, etc)

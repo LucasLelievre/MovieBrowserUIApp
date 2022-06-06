@@ -1,6 +1,6 @@
 /* reset default style */
 * {margin: 0;padding: 0;border: 0;outline: 0;font-size: 100%;vertical-align: baseline;background: transparent;
-    color: black;
+    color: #141414;
     text-decoration: none;
 }
 
@@ -23,7 +23,7 @@ a:hover {
     color: purple;
 }
 .header {
-    background-color: #191919;
+    background-color: #141414;
     overflow: hidden;
     padding: 1em;
     padding-bottom: 4em;
@@ -33,7 +33,7 @@ a:hover {
     left: 0;
     bottom: 0;
     width: 100%;
-    background-color: #191919;
+    background-color: #141414;
     color: white;
     text-align: center;
     padding: 0.7em;
@@ -167,16 +167,22 @@ a:hover {
 .inputPath:focus {
     border-color: blueviolet;
 }
+#dirPaths {
+    display: flex;
+}
 .pathDel svg {
     margin-top: 0.5em;
-    border-radius: 2px;
-    background-color: red;
+    background-color: #f4442e;
+    border: 0.2em solid #f4442e;
+    border-radius: 5px;
+}
+#pathAdd {
+    display: flex;
+    margin-top: 0.5em;
 }
 #pathAdd svg {
-    margin-top: 0.5em;
-    border-radius: 2px;
-    background-color: green;
-}
-#pathAdd svg path, .pathDel svg path {
-    fill: white;
+    /* margin-top: 0.5em; */
+    background-color: #1098f7;
+    border: 0.2em solid #1098f7;
+    border-radius: 5px;
 }
